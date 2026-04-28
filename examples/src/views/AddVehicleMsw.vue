@@ -4,8 +4,8 @@ import {
   useProvideForm,
   rules,
   type Validator,
-} from '@einhasad/vue-form'
-import { FormField } from '@einhasad/vue-form/ant-design'
+} from '@einhasad-vue/vue-form'
+import { FormField } from '@einhasad-vue/vue-form/ant-design'
 import { vehicleApi, validationApi, partLookupApi, type ServerRule } from '../services-msw'
 import { useEventLog } from '../composables/useEventLog'
 import EventConsole from '../components/EventConsole.vue'

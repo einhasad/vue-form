@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useField, type Validator } from '@einhasad/vue-form'
+import { useField, type Validator } from '@einhasad-vue/vue-form'
 
 const props = defineProps<{
   modelValue: string

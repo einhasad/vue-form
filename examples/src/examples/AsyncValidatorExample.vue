@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useProvideForm, rules, type Validator } from '@einhasad/vue-form'
+import { useProvideForm, rules, type Validator } from '@einhasad-vue/vue-form'
 import TextField from './widgets/TextField.vue'
 
 const form = useProvideForm()

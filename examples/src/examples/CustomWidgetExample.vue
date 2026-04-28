@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, defineComponent, h, ref } from 'vue'
-import { useProvideForm, useField, type Validator } from '@einhasad/vue-form'
+import { useProvideForm, useField, type Validator } from '@einhasad-vue/vue-form'
 
 // A widget is anything that calls `useField`. Below is a complete one in
 // ~25 lines — a number slider with built-in label + error.

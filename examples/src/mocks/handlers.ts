@@ -3,7 +3,7 @@ import { http, HttpResponse, delay } from 'msw'
 // Wire-format used by the production ActiveForm:
 //   422 → { result: Array<{ field: string; message: string }> }
 // Field paths are dotted (e.g. "parts.0.sku") to match how
-// @einhasad/vue-form addresses nested fields.
+// @einhasad-vue/vue-form addresses nested fields.
 
 type ServerRule =
   | { kind: 'required' }

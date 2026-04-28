@@ -1,5 +1,5 @@
 // Optional adapter for Ant Design Vue. Imported via the `./ant-design`
-// subpath (`@einhasad/vue-form/ant-design`). Requires the consumer to install
+// subpath (`@einhasad-vue/vue-form/ant-design`). Requires the consumer to install
 // `ant-design-vue` and `dayjs` and to register Antd globally:
 //
 //   import Antd from 'ant-design-vue'

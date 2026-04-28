@@ -3,7 +3,7 @@ import './design-system.css'
 import './style.css'
 import { createApp } from 'vue'
 import Antd from 'ant-design-vue'
-import { setStrings } from '@einhasad/vue-form'
+import { setStrings } from '@einhasad-vue/vue-form'
 import customStrings from './locales/vue-form.en.json'
 import App from './App.vue'
 

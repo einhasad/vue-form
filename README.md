@@ -1,6 +1,6 @@
-# @einhasad/vue-form
+# @einhasad-vue/vue-form
 
-A fully headless Vue 3 form library: form state, field state, validation, and a wildcard-pattern API for array-field rules. The main entry ships **no components, no widgets, no styling.** Optional adapter at `@einhasad/vue-form/ant-design` if you're on Ant Design Vue and want the boilerplate already written.
+A fully headless Vue 3 form library: form state, field state, validation, and a wildcard-pattern API for array-field rules. The main entry ships **no components, no widgets, no styling.** Optional adapter at `@einhasad-vue/vue-form/ant-design` if you're on Ant Design Vue and want the boilerplate already written.
 
 - **Headless core.** `Form` and `Field` are pure TypeScript classes. A thin Vue layer (`useProvideForm`, `useForm`, `useField`) binds them to reactivity. No DOM, no styles, no components.
 - **UI-library independent.** Bring your own UI kit. The optional `./ant-design` subpath is a thin opt-in adapter; everything else stays vanilla.
@@ -13,7 +13,7 @@ A fully headless Vue 3 form library: form state, field state, validation, and a 
 ## Install
 
 ```sh
-npm install @einhasad/vue-form
+npm install @einhasad-vue/vue-form
 ```
 
 Peer-deps: `vue ^3.3`.
@@ -25,7 +25,7 @@ The library has **no `<Form>` component**. You create the form context yourself 
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useProvideForm, rules } from '@einhasad/vue-form'
+import { useProvideForm, rules } from '@einhasad-vue/vue-form'
 import TextInput from './widgets/TextInput.vue'  // your widget
 
 // 1. Provide the form context to descendants. useField calls in child
@@ -93,7 +93,7 @@ A widget is anything that calls `useField`:
 <!-- TextInput.vue (your code, not shipped) -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useField, type Validator } from '@einhasad/vue-form'
+import { useField, type Validator } from '@einhasad-vue/vue-form'
 
 const props = defineProps<{
   modelValue: string
@@ -144,7 +144,7 @@ const f = useField({ attribute: props.attribute, modelValue: value, validators: 
 ### Validator factories (`rules`)
 
 ```ts
-import { rules } from '@einhasad/vue-form'
+import { rules } from '@einhasad-vue/vue-form'
 ```
 
 `rules.required(attr?, override?)`, `rules.minLen(n, …)`, `rules.maxLen`, `rules.minNum`, `rules.maxNum`, `rules.pattern(re, …)`, `rules.email`, `rules.uniqueIn(siblings, currentIndex, key, override?)`.
@@ -169,7 +169,7 @@ formCtx.addFieldValidator('vin', vinUnique)
 ### Strings / i18n
 
 ```ts
-import { setStrings } from '@einhasad/vue-form'
+import { setStrings } from '@einhasad-vue/vue-form'
 setStrings({
   required: '{attr} is required',
   minLen: '{attr} must be at least {min} characters',
@@ -183,7 +183,7 @@ setStrings({
 For pure-TS use (testing, server-side, non-Vue contexts):
 
 ```ts
-import { Form, Field, rules, setStrings } from '@einhasad/vue-form/headless'
+import { Form, Field, rules, setStrings } from '@einhasad-vue/vue-form/headless'
 ```
 
 No Vue, no DOM. Same `Form` / `Field` classes the Vue layer composes.
@@ -213,7 +213,7 @@ import {
   CurrencyInput, PhoneInput,
   DatePicker, DateRangePicker, TimePicker,
   SearchSelect,
-} from '@einhasad/vue-form/ant-design'
+} from '@einhasad-vue/vue-form/ant-design'
 ```
 
 Each widget exposes the same prop surface: `v-model`, `attribute`, `label?`, `required?`, `disabled?`, `validators?`, plus widget-specific props (`items`, `searchCallback`, `step`, etc.). Use them inside `useProvideForm()` exactly like any other `useField`-based widget.
@@ -272,7 +272,7 @@ Pair with `addFieldValidatorsByPattern("parts.*.sku", …)` and the schema-drive
 
 ## Examples
 
-`examples/` is a runnable workspace with two demos that both consume `@einhasad/vue-form/ant-design`:
+`examples/` is a runnable workspace with two demos that both consume `@einhasad-vue/vue-form/ant-design`:
 
 - **Ant Design (in-process mock)** — synthetic `services.ts`, no network.
 - **Ant Design (MSW server-driven)** — real `fetch()` calls intercepted by [MSW v2](https://mswjs.io/), schema fetched from `GET /api/validation/schema/vehicle`, 422 envelopes decoded into per-field errors (incl. nested `parts.0.sku`).

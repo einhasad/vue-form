@@ -11,9 +11,9 @@
     "jsx": "preserve",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
-      "@einhasad/vue-form": ["../src/index.ts"],
-      "@einhasad/vue-form/headless": ["../src/headless/index.ts"],
-      "@einhasad/vue-form/ant-design": ["../src/ant-design/index.ts"]
+      "@einhasad-vue/vue-form": ["../src/index.ts"],
+      "@einhasad-vue/vue-form/headless": ["../src/headless/index.ts"],
+      "@einhasad-vue/vue-form/ant-design": ["../src/ant-design/index.ts"]
     }
   },
   "include": ["src/**/*", "src/**/*.vue", "env.d.ts"]

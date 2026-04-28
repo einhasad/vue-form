@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 // The headless subpath has zero Vue dependencies — same Form/Field classes
 // the Vue layer composes, usable from tests, server code, anywhere.
-import { Form, Field, rules } from '@einhasad/vue-form/headless'
+import { Form, Field, rules } from '@einhasad-vue/vue-form/headless'
 
 const log = ref('')
 

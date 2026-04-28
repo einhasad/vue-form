@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useProvideForm, rules } from '@einhasad/vue-form'
+import { useProvideForm, rules } from '@einhasad-vue/vue-form'
 // One scoped-slot wrapper, drop in any antd component you like.
-import { FormField } from '@einhasad/vue-form/ant-design'
+import { FormField } from '@einhasad-vue/vue-form/ant-design'
 
 const form = useProvideForm()
 const data = ref({

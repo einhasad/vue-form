@@ -161,7 +161,7 @@
             A fully headless Vue 3 form library: form state, field state, validation,
             and a wildcard-pattern API for array-field rules. Bring your own UI kit —
             or use the optional Ant Design adapter at
-            <code>@einhasad/vue-form/ant-design</code>.
+            <code>@einhasad-vue/vue-form/ant-design</code>.
           </p>
           <div class="ds-hero__ctas">
             <div class="ds-install">
@@ -227,14 +227,14 @@
         Introduction
       </h2>
       <p class="ds-lede">
-        <code>@einhasad/vue-form</code> ships <strong>no components</strong>, no widgets,
+        <code>@einhasad-vue/vue-form</code> ships <strong>no components</strong>, no widgets,
         no styling. The main entry is composables, headless classes, and validator factories —
         nothing else.
       </p>
       <p>
         Wrap your form in <code>useProvideForm()</code>, build any widget that calls
         <code>useField</code>, and you have a working form. Want Ant Design?
-        Import widgets from <code>@einhasad/vue-form/ant-design</code> — same surface,
+        Import widgets from <code>@einhasad-vue/vue-form/ant-design</code> — same surface,
         zero antd code in the core bundle.
       </p>
 
@@ -332,7 +332,7 @@
       >
         <h2>API Reference</h2>
         <p>
-          The full surface of <code>@einhasad/vue-form</code>: composables you import,
+          The full surface of <code>@einhasad-vue/vue-form</code>: composables you import,
           methods on the <code>FormContext</code>, validator factories, and adapter
           subpaths.
         </p>
@@ -501,15 +501,15 @@
             </thead>
             <tbody>
               <tr>
-                <td><code>@einhasad/vue-form</code></td>
+                <td><code>@einhasad-vue/vue-form</code></td>
                 <td>Main barrel. Composables, classes, validator factories, types. <strong>Zero UI dependencies.</strong></td>
               </tr>
               <tr>
-                <td><code>@einhasad/vue-form/headless</code></td>
+                <td><code>@einhasad-vue/vue-form/headless</code></td>
                 <td>Pure TypeScript: <code>Form</code> / <code>Field</code> classes, no Vue. For tests, server, non-Vue contexts.</td>
               </tr>
               <tr>
-                <td><code>@einhasad/vue-form/ant-design</code></td>
+                <td><code>@einhasad-vue/vue-form/ant-design</code></td>
                 <td>Ant Design Vue widget pack. Optional peer-deps: <code>ant-design-vue</code>, <code>dayjs</code>.</td>
               </tr>
             </tbody>
@@ -716,7 +716,7 @@
       >
         <h2>Headless subpath (no Vue)</h2>
         <p>
-          Import from <code>@einhasad/vue-form/headless</code> for tests, server-side
+          Import from <code>@einhasad-vue/vue-form/headless</code> for tests, server-side
           code, or any non-Vue context. Same <code>Form</code> / <code>Field</code>
           classes the Vue layer composes — without <code>vue</code> as a peer-dep.
         </p>
@@ -737,7 +737,7 @@
           Opt-in widget pack that wraps <code>&lt;a-input&gt;</code>,
           <code>&lt;a-select&gt;</code>, <code>&lt;a-date-picker&gt;</code>, and friends.
           Each widget calls <code>useField</code> internally. <strong>Not
-            included unless you import from <code>@einhasad/vue-form/ant-design</code></strong>,
+            included unless you import from <code>@einhasad-vue/vue-form/ant-design</code></strong>,
           so the core lib stays free of antd code.
         </p>
         <ExampleFrame
@@ -895,7 +895,7 @@ import headlessSource from './examples/HeadlessExample.vue?raw'
 import antdSource from './examples/AntdAdapterExample.vue?raw'
 
 const version = '0.1.0'
-const installCommand = 'npm install @einhasad/vue-form'
+const installCommand = 'npm install @einhasad-vue/vue-form'
 
 // Match docs design system. Tokens map to vars in design-system.css.
 const antdTheme = {

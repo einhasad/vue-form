@@ -1,0 +1,18 @@
+{
+  "required": "{attr} cannot be blank",
+  "minLen": "{attr} should contain at least {min} characters",
+  "maxLen": "{attr} should contain at most {max} characters",
+  "minNum": "{attr} must be no less than {min}",
+  "maxNum": "{attr} must be no greater than {max}",
+  "pattern": "{attr} format is invalid",
+  "email": "{attr} must be a valid email",
+  "unique": "{value} is already used",
+  "uniqueServer": "{value} is not available",
+  "selectPlaceholder": "Select {label}",
+  "searchPlaceholder": "Search…",
+  "currencySymbol": "$",
+  "nestedAddButton": "Add item",
+  "nestedDeleteButton": "Delete",
+  "nestedCloneButton": "Clone",
+  "errFormMissing": "[vue-form] useForm() must be called inside a <Form> component"
+}

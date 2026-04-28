@@ -1,0 +1,7 @@
+{
+  "currencySymbol": "$",
+  "nestedAddButton": "Add Part",
+  "nestedDeleteButton": "Remove",
+  "nestedCloneButton": "Duplicate",
+  "unique": "{value} is already on the list"
+}

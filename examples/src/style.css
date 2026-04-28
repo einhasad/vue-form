@@ -1,0 +1,202 @@
+/* ============================================================
+   Demo-only overrides on top of ./design-system.css
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+}
+
+/* ============================================================
+   Demo section wrapper
+   ============================================================ */
+.demo-section {
+  scroll-margin-top: calc(var(--header-h) + 16px);
+  margin-bottom: var(--space-9);
+}
+.demo-section h2 {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
+  font-weight: 600;
+  margin: var(--space-9) 0 var(--space-3);
+  scroll-margin-top: calc(var(--header-h) + 16px);
+}
+.demo-section p {
+  margin: var(--space-3) 0;
+  color: var(--ink-2);
+}
+
+/* ============================================================
+   Demo form primitives — minimal, library-agnostic
+   ============================================================ */
+.demo-form { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.demo-form fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.demo-form fieldset:disabled { opacity: 0.6; }
+
+.demo-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.demo-label { font-size: var(--fs-sm); font-weight: 500; color: var(--ink-2); }
+.demo-label__required { color: var(--danger); margin-left: 2px; }
+.demo-input,
+.demo-textarea,
+.demo-select {
+  font: inherit;
+  font-size: var(--fs-sm);
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--paper);
+  color: var(--ink);
+  width: 100%;
+  min-width: 0;
+}
+.demo-textarea { min-height: 72px; resize: vertical; }
+.demo-input:focus,
+.demo-textarea:focus,
+.demo-select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: var(--shadow-focus);
+}
+.demo-input--error,
+.demo-textarea--error,
+.demo-select--error { border-color: var(--danger); }
+
+.demo-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 2px;
+}
+
+.demo-form__actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-3);
+}
+
+.demo-form__alert {
+  border: 1px solid var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+}
+.demo-form__alert--success {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+/* ============================================================
+   Result panel (shows JSON of submitted data)
+   ============================================================ */
+.demo-result {
+  background: var(--surface-sunk);
+  border: 1px solid var(--line);
+  padding: var(--space-3);
+  border-radius: var(--radius-xs);
+  margin-top: var(--space-3);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow: auto;
+  max-height: 220px;
+  color: var(--ink);
+}
+
+/* ============================================================
+   Parts table (used by ArrayFields example)
+   ============================================================ */
+.demo-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  font-size: 13px;
+}
+.demo-table th,
+.demo-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  text-align: left;
+}
+.demo-table th { background: var(--surface-sunk); font-weight: 500; color: var(--ink-2); font-size: 12px; }
+.demo-table tr:last-child td { border-bottom: none; }
+.demo-table .demo-input { padding: 5px 7px; font-size: 12.5px; }
+.demo-table .demo-error { font-size: 11px; }
+
+/* ============================================================
+   Antd integration tweaks (for the full vehicle form section)
+   ============================================================ */
+.parts-table td .ant-form-item { margin-bottom: 0; }
+.parts-table td .ant-form-item-explain { font-size: 0.75rem; padding-top: 2px; }
+
+/* ============================================================
+   Two-column area for headless / live demo split
+   ============================================================ */
+.demo-split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: start; }
+@media (max-width: 720px) { .demo-split { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   Concept card overflow safety — long inline code wraps instead of bleeding out
+   ============================================================ */
+.ds-concept-card__desc { overflow-wrap: anywhere; }
+
+/* ============================================================
+   Containment for sections / examples — prevent any single child
+   (a long input value, a wide table) from pushing the prose column wider
+   ============================================================ */
+.ds-prose { min-width: 0; }
+.demo-section { min-width: 0; }
+.ds-example-frame { min-width: 0; max-width: 100%; }
+.ds-example-frame__stage { min-width: 0; max-width: 100%; overflow-x: auto; }
+
+/* ============================================================
+   Range slider — match docs design system
+   ============================================================ */
+.demo-form input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--line);
+  border-radius: var(--radius-full);
+  outline: none;
+  margin: 8px 0;
+  cursor: pointer;
+}
+.demo-form input[type='range']:focus-visible {
+  box-shadow: var(--shadow-focus);
+}
+.demo-form input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  border: 2px solid var(--paper);
+  box-shadow: 0 1px 3px rgba(17, 17, 17, 0.18);
+  cursor: pointer;
+  transition: transform var(--dur-hover) var(--ease);
+}
+.demo-form input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+.demo-form input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  border: 2px solid var(--paper);
+  box-shadow: 0 1px 3px rgba(17, 17, 17, 0.18);
+  cursor: pointer;
+}
+.demo-form input[type='range']::-moz-range-track {
+  height: 6px;
+  background: var(--line);
+  border-radius: var(--radius-full);
+}

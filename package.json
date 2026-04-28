@@ -1,0 +1,94 @@
+{
+  "name": "@einhasad/vue-form",
+  "version": "0.1.0",
+  "description": "Fully headless Vue 3 form library. Composables, headless classes, and validator factories — bring your own UI. Optional Ant Design Vue adapter at the ./ant-design subpath.",
+  "author": "Dima Popov",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./headless": {
+      "import": "./dist/headless.mjs",
+      "require": "./dist/headless.cjs",
+      "types": "./dist/headless/index.d.ts"
+    },
+    "./ant-design": {
+      "import": "./dist/ant-design.mjs",
+      "require": "./dist/ant-design.cjs",
+      "types": "./dist/ant-design/index.d.ts"
+    }
+  },
+  "sideEffects": false,
+  "keywords": [
+    "vue",
+    "vue3",
+    "form",
+    "forms",
+    "validation",
+    "headless",
+    "composables",
+    "typescript",
+    "ant-design-vue"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/einhasad/vue-form.git"
+  },
+  "bugs": {
+    "url": "https://github.com/einhasad/vue-form/issues"
+  },
+  "homepage": "https://github.com/einhasad/vue-form#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "peerDependencies": {
+    "ant-design-vue": "^4.0.0",
+    "dayjs": "^1.11.0",
+    "vue": "^3.3"
+  },
+  "peerDependenciesMeta": {
+    "ant-design-vue": {
+      "optional": true
+    },
+    "dayjs": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vitest/coverage-v8": "^1.6.1",
+    "@vue/test-utils": "^2.4.4",
+    "jsdom": "^24.0.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.0",
+    "vite-plugin-dts": "^3.7.2",
+    "vitest": "^1.2.0",
+    "vue": "^3.4.0",
+    "vue-tsc": "^2.0.29"
+  },
+  "workspaces": [
+    "examples"
+  ]
+}

@@ -1,6 +1,14 @@
 # @einhasad-vue/vue-form
 
+[![npm version](https://img.shields.io/npm/v/@einhasad-vue/vue-form.svg?style=flat-square)](https://www.npmjs.com/package/@einhasad-vue/vue-form)
+[![CI](https://img.shields.io/github/actions/workflow/status/einhasad/vue-form/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/einhasad/vue-form/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Vue 3](https://img.shields.io/badge/vue-3.3+-42b883.svg?style=flat-square)](https://vuejs.org/)
+[![TypeScript](https://img.shields.io/badge/typescript-strict-3178c6.svg?style=flat-square)](https://www.typescriptlang.org/)
+
 A fully headless Vue 3 form library: form state, field state, validation, and a wildcard-pattern API for array-field rules. The main entry ships **no components, no widgets, no styling.** Optional adapter at `@einhasad-vue/vue-form/ant-design` if you're on Ant Design Vue and want the boilerplate already written.
+
+🚀 **[Live demo →](https://einhasad.github.io/vue-form/)** — runs entirely in-browser with mocked APIs (MSW).
 
 - **Headless core.** `Form` and `Field` are pure TypeScript classes. A thin Vue layer (`useProvideForm`, `useForm`, `useField`) binds them to reactivity. No DOM, no styles, no components.
 - **UI-library independent.** Bring your own UI kit. The optional `./ant-design` subpath is a thin opt-in adapter; everything else stays vanilla.

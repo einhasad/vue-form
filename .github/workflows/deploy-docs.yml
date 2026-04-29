@@ -32,6 +32,11 @@ jobs:
           BASE_PATH: /vue-form/
         run: npm run build
       - uses: actions/configure-pages@v5
+        with:
+          # Auto-enable Pages with `workflow` build type if it isn't already.
+          # Without this, the first run on a new repo / fork fails with
+          # `HttpError: Not Found - .../pages` (see run 25073184279).
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: examples/dist

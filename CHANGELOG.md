@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 — 2026-10-22
+
+### Added
+
+- `useFormOptional()` — returns the nearest `FormContext` or `undefined`; never throws and never emits a Vue injection warning. `useForm()` keeps throwing when no form is provided.
+
+### Changed
+
+- `useField` no longer requires a form. Without a `useProvideForm` ancestor it skips registration; `validate`, `validateAsync`, `onBlur`, `errors`, `isInvalid` and `firstError` work locally with the same return shape. Previously it threw `errFormMissing`.
+- `ant-design-vue` optional peer range widened to `^3.2.0 || ^4.0.0`.
+
 ## 0.2.0 — 2026-04-28
 
 ### Added

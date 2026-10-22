@@ -1,7 +1,7 @@
 import { computed, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
 import { Field } from '../headless/Field'
 import type { FieldError, FieldHandle, Validator } from '../headless/types'
-import { useForm } from './useForm'
+import { useFormOptional } from './useForm'
 
 export interface UseFieldOptions {
   attribute: string
@@ -10,7 +10,7 @@ export interface UseFieldOptions {
 }
 
 export function useField(opts: UseFieldOptions) {
-  const formCtx = useForm()
+  const formCtx = useFormOptional()
   const errors = ref<FieldError[]>([])
 
   const field = new Field(
@@ -78,8 +78,11 @@ export function useField(opts: UseFieldOptions) {
     },
   }
 
-  onMounted(() => formCtx.register(handle))
-  onUnmounted(() => formCtx.unregister(handle))
+  // Without a form the field still validates locally; it just isn't registered.
+  if (formCtx) {
+    onMounted(() => formCtx.register(handle))
+    onUnmounted(() => formCtx.unregister(handle))
+  }
 
   return {
     errors,

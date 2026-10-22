@@ -131,7 +131,10 @@ const f = useField({ attribute: props.attribute, modelValue: value, validators: 
 | --- | --- |
 | `useProvideForm()` | A `FormContext`. Call once at the form root — `useField` finds it via `inject`. |
 | `useForm()` | The `FormContext` from the nearest `useProvideForm` ancestor. Throws if missing. |
-| `useField({ attribute, modelValue, validators? })` | `{ errors, isInvalid, firstError, validate, validateAsync, onBlur }`. Registers on mount, unregisters on unmount. |
+| `useFormOptional()` | The nearest `FormContext`, or `undefined` when there is none. Never throws or warns — for widgets that also work outside a form. |
+| `useField({ attribute, modelValue, validators? })` | `{ errors, isInvalid, firstError, validate, validateAsync, onBlur }`. Registers with the nearest form on mount, unregisters on unmount. |
+
+`useField` does not require a form. Without a `useProvideForm` ancestor it registers nowhere, but `validate`, `validateAsync`, `onBlur`, `errors`, `isInvalid` and `firstError` behave exactly as inside a form — so the same widget can be mounted standalone (filters, toolbars, unit tests).
 
 ### `FormContext`
 
@@ -203,6 +206,8 @@ Opt-in widget pack that wraps `<a-input>`, `<a-select>`, `<a-date-picker>`, etc.
 ```sh
 npm install ant-design-vue dayjs   # peer-deps for the adapter
 ```
+
+Supported `ant-design-vue` range: `^3.2.0 || ^4.0.0`.
 
 ```ts
 // main.ts — register Antd globally so the adapter's templates resolve a-* tags.
@@ -302,7 +307,7 @@ Both demo views show the full submit-orchestration pattern:
 ```sh
 npm install
 npm run dev --workspace=examples   # boots the demo at http://localhost:5173
-npm test                           # 63 tests covering headless classes, rules, Vue bridge
+npm test                           # vitest: headless classes, rules (incl. fuzz), Vue bridge, antd adapter
 npm run typecheck                  # vue-tsc, root + examples
 npm run build                      # ESM + CJS bundles to dist/, with .d.ts via vite-plugin-dts
 ```

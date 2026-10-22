@@ -4,7 +4,7 @@
 // and headless classes below.
 
 // Composables
-export { useForm, useProvideForm } from './vue/useForm'
+export { useForm, useFormOptional, useProvideForm } from './vue/useForm'
 export type { FormContext } from './vue/useForm'
 export { useField } from './vue/useField'
 export type { UseFieldOptions } from './vue/useField'

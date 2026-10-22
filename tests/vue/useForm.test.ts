@@ -1,7 +1,13 @@
-import { describe, it, expect } from 'vitest'
-import { defineComponent, h, ref } from 'vue'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { defineComponent, h, nextTick, ref, type Ref } from 'vue'
 import { mount } from '@vue/test-utils'
-import { useProvideForm, useForm, type FormContext } from '../../src/vue/useForm'
+import type { Validator } from '../../src/headless/types'
+import {
+  useProvideForm,
+  useForm,
+  useFormOptional,
+  type FormContext,
+} from '../../src/vue/useForm'
 import { useField } from '../../src/vue/useField'
 import * as rules from '../../src/headless/rules'
 
@@ -255,5 +261,93 @@ describe('useField (mounted under a form)', () => {
     ctx.clearErrors()
     expect(ctx.hasErrors()).toBe(false)
     expect(ctx.formErrors.value).toEqual([])
+  })
+})
+
+describe('useFormOptional', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('returns undefined without a provider and does not warn', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let found: FormContext | undefined = {} as FormContext
+    const Inner = defineComponent({
+      setup() {
+        found = useFormOptional()
+        return () => null
+      },
+    })
+    expect(() => mount(Inner)).not.toThrow()
+    expect(found).toBeUndefined()
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('returns the provided context under useProvideForm', () => {
+    let found: FormContext | undefined
+    const Inner = defineComponent({
+      setup() {
+        found = useFormOptional()
+        return () => null
+      },
+    })
+    const { ctx } = withForm(Inner)
+    expect(found).toBe(ctx)
+  })
+})
+
+describe('useField outside a form', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  function mountStandalone(model: Ref<unknown>, validators: Validator[] = [rules.required('Name')]) {
+    let api!: ReturnType<typeof useField>
+    const Inner = defineComponent({
+      setup() {
+        api = useField({ attribute: 'name', modelValue: model, validators })
+        return () => h('input')
+      },
+    })
+    const wrapper = mount(Inner)
+    return { api, wrapper }
+  }
+
+  it('mounts and unmounts without a provider, never throws or warns', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const model = ref<unknown>('')
+    let mounted!: ReturnType<typeof mountStandalone>
+    expect(() => {
+      mounted = mountStandalone(model)
+    }).not.toThrow()
+    expect(() => mounted.wrapper.unmount()).not.toThrow()
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('validates locally and returns the same shape as under a form', async () => {
+    const model = ref<unknown>('')
+    const { api } = mountStandalone(model, [
+      rules.required('Name'),
+      async (v) => (v === '' ? { message: 'async-bad', key: 'async' } : undefined),
+    ])
+    expect(Object.keys(api).sort()).toEqual(
+      ['errors', 'firstError', 'isInvalid', 'onBlur', 'validate', 'validateAsync'],
+    )
+    expect(api.isInvalid.value).toBe(false)
+    expect(api.validate()[0].message).toBe('Name cannot be blank')
+    expect(api.isInvalid.value).toBe(true)
+    expect(api.firstError.value?.message).toBe('Name cannot be blank')
+    expect((await api.validateAsync()).map((e) => e.key)).toEqual(['required', 'async'])
+  })
+
+  it('onBlur validates and model changes re-validate while errors are shown', async () => {
+    const model = ref<unknown>('')
+    const { api } = mountStandalone(model)
+    api.onBlur()
+    expect(api.errors.value).toHaveLength(1)
+    model.value = 'filled'
+    await nextTick()
+    expect(api.errors.value).toEqual([])
+    expect(api.isInvalid.value).toBe(false)
   })
 })

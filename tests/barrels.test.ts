@@ -6,6 +6,7 @@ import * as antd from '../src/ant-design/index'
 describe('public barrels', () => {
   it('main barrel re-exports composables, strings helpers, and rules', () => {
     expect(typeof main.useForm).toBe('function')
+    expect(typeof main.useFormOptional).toBe('function')
     expect(typeof main.useProvideForm).toBe('function')
     expect(typeof main.useField).toBe('function')
     expect(typeof main.setStrings).toBe('function')

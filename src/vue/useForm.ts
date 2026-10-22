@@ -3,7 +3,7 @@ import { Form } from '../headless/Form'
 import { getStrings } from '../headless/strings'
 import type { FieldError, FieldHandle, Validator } from '../headless/types'
 
-// Module-private — never exported. Outside callers cannot bypass useForm/useProvideForm.
+// Module-private — never exported. Outside callers cannot bypass useForm/useFormOptional/useProvideForm.
 const FORM_KEY: InjectionKey<FormContext> = Symbol('vue-form')
 
 export interface FormContext {
@@ -80,7 +80,13 @@ export function useProvideForm(): FormContext {
 }
 
 export function useForm(): FormContext {
-  const ctx = inject(FORM_KEY)
+  const ctx = useFormOptional()
   if (!ctx) throw new Error(getStrings().errFormMissing)
   return ctx
+}
+
+// For widgets that also work standalone: undefined (no warning, no throw)
+// when there is no useProvideForm ancestor.
+export function useFormOptional(): FormContext | undefined {
+  return inject(FORM_KEY, undefined)
 }

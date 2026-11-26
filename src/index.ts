@@ -7,7 +7,7 @@
 export { useForm, useFormOptional, useProvideForm } from './vue/useForm'
 export type { FormContext } from './vue/useForm'
 export { useField } from './vue/useField'
-export type { UseFieldOptions } from './vue/useField'
+export type { UseFieldOptions, UseFieldReturn } from './vue/useField'
 
 // Strings
 export {
@@ -19,7 +19,7 @@ export {
 export type { Strings } from './headless/strings'
 
 // Types
-export type { Validator, FieldHandle, FieldError } from './headless/types'
+export type { Validator, SyncValidator, FieldHandle, FieldError } from './headless/types'
 
 // Validator factories
 import * as rules from './headless/rules'

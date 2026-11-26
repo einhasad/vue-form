@@ -1,34 +1,48 @@
 {
   "name": "@einhasad-vue/vue-form",
   "version": "0.3.0",
-  "description": "Fully headless Vue 3 form library. Composables, headless classes, and validator factories — bring your own UI. Optional Ant Design Vue adapter at the ./ant-design subpath.",
+  "description": "Fully headless Vue 3 form library. Composables and validator factories — bring your own UI. Framework-free Form/Field classes at the ./headless subpath; optional Ant Design Vue adapter at ./ant-design.",
   "author": "Dima Popov",
   "license": "MIT",
   "type": "module",
   "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
+    "dist"
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./headless": {
-      "import": "./dist/headless.mjs",
-      "require": "./dist/headless.cjs",
-      "types": "./dist/headless/index.d.ts"
+      "import": {
+        "types": "./dist/headless.d.ts",
+        "default": "./dist/headless.mjs"
+      },
+      "require": {
+        "types": "./dist/headless.d.cts",
+        "default": "./dist/headless.cjs"
+      }
     },
     "./ant-design": {
-      "import": "./dist/ant-design.mjs",
-      "require": "./dist/ant-design.cjs",
-      "types": "./dist/ant-design/index.d.ts"
-    }
+      "import": {
+        "types": "./dist/ant-design.d.ts",
+        "default": "./dist/ant-design.mjs"
+      },
+      "require": {
+        "types": "./dist/ant-design.d.cts",
+        "default": "./dist/ant-design.cjs"
+      }
+    },
+    "./package.json": "./package.json"
   },
   "sideEffects": false,
   "keywords": [
@@ -49,19 +63,22 @@
   "bugs": {
     "url": "https://github.com/einhasad/vue-form/issues"
   },
-  "homepage": "https://github.com/einhasad/vue-form#readme",
+  "homepage": "https://einhasad.github.io/vue-form/",
   "publishConfig": {
     "access": "public"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20"
   },
   "scripts": {
     "build": "vite build",
     "typecheck": "vue-tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
+    "typecheck:examples": "npm run typecheck --workspace examples",
+    "lint": "eslint src tests examples/src",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+    "prepublishOnly": "npm run lint && npm run typecheck && npm run typecheck:examples && npm run test:coverage && npm run build"
   },
   "peerDependencies": {
     "ant-design-vue": "^3.2.0 || ^4.0.0",
@@ -77,16 +94,22 @@
     }
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@faker-js/faker": "^10.4.0",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vitest/coverage-v8": "^1.6.1",
     "@vue/test-utils": "^2.4.4",
+    "ant-design-vue": "^4.2.6",
+    "eslint": "^10.15.0",
+    "eslint-plugin-vue": "^10.12.1",
     "jsdom": "^24.0.0",
     "typescript": "^5.3.3",
+    "typescript-eslint": "^8.74.0",
     "vite": "^5.1.0",
-    "vite-plugin-dts": "^3.7.2",
+    "vite-plugin-dts": "^4.5.4",
     "vitest": "^1.2.0",
     "vue": "^3.4.0",
+    "vue-eslint-parser": "^10.4.2",
     "vue-tsc": "^2.0.29"
   },
   "workspaces": [

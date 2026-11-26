@@ -1,0 +1,60 @@
+name: Publish to npm
+
+# npm Trusted Publishing (OIDC): no NPM_TOKEN secret. The trusted publisher on
+# npmjs.com must name this repository and the workflow file `publish.yml`.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish; must equal package.json version (e.g. 0.4.0)'
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+      - name: Use npm 11 (trusted publishing needs >= 11.5.1)
+        run: npm install -g npm@11
+      - name: Requested version matches package.json
+        env:
+          EXPECTED: ${{ github.event_name == 'release' && github.event.release.tag_name || format('v{0}', inputs.version) }}
+        run: |
+          ACTUAL="v$(node -p "require('./package.json').version")"
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "Expected $EXPECTED but package.json is $ACTUAL"
+            exit 1
+          fi
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "$ACTUAL" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json $ACTUAL"
+            exit 1
+          fi
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run typecheck:examples
+      - run: npm run test:coverage
+      - run: npm run build
+      - name: Build demo site
+        working-directory: examples
+        env:
+          BASE_PATH: /vue-form/
+        run: npm run build
+      - run: npm pack --dry-run
+      - run: npm publish --provenance --access public

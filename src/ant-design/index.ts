@@ -13,8 +13,10 @@
 //   <FormField v-model="data.email" attribute="email" label="Email"
 //              :validators="[rules.required(), rules.email()]"
 //              v-slot="{ field }">
-//     <a-input v-model:value="field.value" @blur="field.onBlur"
-//              :status="field.status" />
+//     <a-input :id="field.id" v-model:value="field.value" @blur="field.onBlur"
+//              :status="field.status" :aria-invalid="field.invalid"
+//              :aria-describedby="field.errorId" />
 //   </FormField>
 
 export { default as FormField } from './FormField.vue'
+export type { FormFieldBinding, FormFieldSlotProps } from './types'

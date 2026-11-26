@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Form } from '../../src/headless/Form'
 import { Field } from '../../src/headless/Field'
+import type { FieldHandle, Validator } from '../../src/headless/types'
 
 describe('Form', () => {
   it('register / unregister updates getFields', () => {
@@ -176,5 +177,97 @@ describe('Form', () => {
       f.validate()
       expect(f.errors).toEqual([{ message: 'p' }, { message: 'p' }])
     })
+    describe('disposer', () => {
+      const skuBad: Validator = () => ({ message: 'sku-bad' })
+
+      it('removes the pattern validators from registered fields and keeps inline ones', () => {
+        const form = new Form()
+        const f = new Field('parts.0.sku', [() => ({ message: 'inline' })])
+        form.register(f)
+        const dispose = form.addFieldValidatorsByPattern('parts.*.sku', [skuBad])
+        dispose()
+        expect(f.validate()).toEqual([{ message: 'inline' }])
+      })
+
+      it('stops applying the pattern to fields registered later', () => {
+        const form = new Form()
+        form.addFieldValidatorsByPattern('parts.*.sku', [skuBad])()
+        const f = new Field('parts.0.sku')
+        form.register(f)
+        expect(f.validate()).toEqual([])
+      })
+
+      it('lets a schema reload replace a pattern without duplicating errors', () => {
+        const form = new Form()
+        const f = new Field('parts.0.sku')
+        form.register(f)
+        const dispose = form.addFieldValidatorsByPattern('parts.*.sku', [skuBad])
+        dispose()
+        form.addFieldValidatorsByPattern('parts.*.sku', [skuBad])
+        expect(f.validate()).toEqual([{ message: 'sku-bad' }])
+      })
+
+      it('keeps the same validator function when it is also passed inline', () => {
+        const form = new Form()
+        const f = new Field('parts.0.sku', [skuBad])
+        form.register(f)
+        form.addFieldValidatorsByPattern('parts.*.sku', [skuBad])()
+        expect(f.validate()).toEqual([{ message: 'sku-bad' }])
+      })
+
+      it('removes every copy added by re-registering the same field', () => {
+        const form = new Form()
+        const dispose = form.addFieldValidatorsByPattern('parts.*.sku', [skuBad])
+        const f = new Field('parts.0.sku')
+        form.register(f)
+        form.unregister(f)
+        form.register(f)
+        dispose()
+        expect(f.validate()).toEqual([])
+      })
+
+      it('only removes its own pattern and is idempotent', () => {
+        const form = new Form()
+        const f = new Field('parts.0.sku')
+        form.register(f)
+        const disposeA = form.addFieldValidatorsByPattern('parts.*.sku', [skuBad])
+        form.addFieldValidatorsByPattern('parts.*.sku', [() => ({ message: 'other' })])
+        disposeA()
+        disposeA()
+        expect(f.validate()).toEqual([{ message: 'other' }])
+      })
+
+      it('does not throw for handles without removeValidator', () => {
+        const form = new Form()
+        const added: Validator[] = []
+        const handle: FieldHandle = {
+          attribute: 'parts.0.sku',
+          errors: [],
+          validate: () => [],
+          validateAsync: async () => [],
+          setValidators: () => undefined,
+          addValidator: (v) => {
+            added.push(v)
+          },
+          setErrors: () => undefined,
+          addError: () => undefined,
+          clearErrors: () => undefined,
+        }
+        form.register(handle)
+        const dispose = form.addFieldValidatorsByPattern('parts.*.sku', [skuBad])
+        expect(added).toHaveLength(1)
+        expect(() => dispose()).not.toThrow()
+      })
+    })
+  })
+
+  it('clearErrors drops errors set from outside for later validations', () => {
+    const form = new Form()
+    const f = new Field('email', [], 'taken@x.y')
+    form.register(f)
+    form.getField('email')!.setErrors([{ message: 'server' }])
+    expect(form.validateAll()).toBe(false)
+    form.clearErrors()
+    expect(form.validateAll()).toBe(true)
   })
 })

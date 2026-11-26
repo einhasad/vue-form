@@ -18,6 +18,11 @@ function patternToRegex(pattern: string): RegExp {
   return new RegExp(`^${escaped}$`)
 }
 
+const ownedCopy =
+  (v: Validator): Validator =>
+  (value) =>
+    v(value)
+
 export class Form {
   private fields: FieldHandle[] = []
   private patternValidators: PatternEntry[] = []
@@ -88,14 +93,34 @@ export class Form {
    * pattern (e.g. "parts.*.sku" matches "parts.0.sku", "parts.1.sku", …).
    * Applies to fields registered now AND any registered later — useful for
    * server-driven schemas that describe rules for array items, where the
-   * concrete row indexes don't exist yet.
+   * concrete row indexes don't exist yet. Returns a disposer that removes the
+   * pattern and its validators again.
    */
-  addFieldValidatorsByPattern(pattern: string, validators: Validator[]): void {
-    const regex = patternToRegex(pattern)
-    this.patternValidators.push({ pattern, regex, validators: [...validators] })
+  addFieldValidatorsByPattern(
+    pattern: string,
+    validators: Validator[],
+  ): () => void {
+    const entry: PatternEntry = {
+      pattern,
+      regex: patternToRegex(pattern),
+      validators: validators.map(ownedCopy),
+    }
+    this.patternValidators.push(entry)
     for (const f of this.fields) {
-      if (regex.test(f.attribute)) {
-        for (const v of validators) f.addValidator(v)
+      if (entry.regex.test(f.attribute)) {
+        for (const v of entry.validators) f.addValidator(v)
+      }
+    }
+    return () => this.removePattern(entry)
+  }
+
+  private removePattern(entry: PatternEntry): void {
+    const i = this.patternValidators.indexOf(entry)
+    if (i < 0) return
+    this.patternValidators.splice(i, 1)
+    for (const f of this.fields) {
+      if (entry.regex.test(f.attribute)) {
+        for (const v of entry.validators) f.removeValidator?.(v)
       }
     }
   }

@@ -1,6 +1,6 @@
-import en from './en.json'
+import { en, type Strings } from './en'
 
-export type Strings = typeof en
+export type { Strings }
 
 let current: Strings = { ...en }
 

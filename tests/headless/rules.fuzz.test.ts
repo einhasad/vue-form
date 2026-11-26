@@ -100,6 +100,22 @@ describe('fuzz: numeric', () => {
       expect(v(w)?.key, `should reject: ${w}`).toBe('numeric')
     })
   })
+  it('fails for faker hexadecimal, binary and octal literals', () => {
+    times(N, () => faker.string.hexadecimal({ length: { min: 1, max: 8 } })).forEach((h) => {
+      expect(v(h)?.key, `should reject: ${h}`).toBe('numeric')
+    })
+    times(N, () => faker.string.binary({ length: { min: 1, max: 16 } })).forEach((b) => {
+      expect(v(b)?.key, `should reject: ${b}`).toBe('numeric')
+    })
+    times(N, () => faker.string.octal({ length: { min: 1, max: 8 } })).forEach((o) => {
+      expect(v(o)?.key, `should reject: ${o}`).toBe('numeric')
+    })
+  })
+  it('fails for whitespace-only strings of any length', () => {
+    times(N, () => ' \t\n'.repeat(faker.number.int({ min: 1, max: 5 }))).forEach((w) => {
+      expect(v(w)?.key).toBe('numeric')
+    })
+  })
 })
 
 describe('fuzz: between', () => {

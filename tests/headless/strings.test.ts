@@ -13,6 +13,25 @@ describe('strings', () => {
     expect(getStrings().required).toBe('{attr} cannot be blank')
   })
 
+  it('defaults fieldFallback to "This field"', () => {
+    expect(getStrings().fieldFallback).toBe('This field')
+  })
+
+  it('overrides fieldFallback via setStrings', () => {
+    setStrings({ fieldFallback: 'Dieses Feld' })
+    expect(getStrings().fieldFallback).toBe('Dieses Feld')
+    resetStrings()
+    expect(getStrings().fieldFallback).toBe('This field')
+  })
+
+  it('errFormMissing names the real provider API, not a <Form> component', () => {
+    const msg = getStrings().errFormMissing
+    expect(msg).not.toContain('<Form>')
+    expect(msg).toContain('useForm()')
+    expect(msg).toContain('useProvideForm()')
+    expect(msg).toContain('useFormOptional()')
+  })
+
   it('merges partial overrides', () => {
     setStrings({ required: 'Required.' })
     expect(getStrings().required).toBe('Required.')

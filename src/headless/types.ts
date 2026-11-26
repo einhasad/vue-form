@@ -9,6 +9,8 @@ export interface FieldError {
 export type Validator =
   (value: unknown) => FieldError | undefined | Promise<FieldError | undefined>
 
+export type SyncValidator = (value: unknown) => FieldError | undefined
+
 export interface FieldHandle {
   attribute: string
   errors: FieldError[]
@@ -16,6 +18,7 @@ export interface FieldHandle {
   validateAsync(): Promise<FieldError[]>
   setValidators(validators: Validator[]): void
   addValidator(validator: Validator): void
+  removeValidator?(validator: Validator): void
   setErrors(errors: FieldError[]): void
   addError(error: FieldError): void
   clearErrors(): void

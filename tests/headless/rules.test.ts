@@ -27,6 +27,39 @@ describe('required', () => {
   it('honors an override message', () => {
     expect(rules.required('', 'Field is required')('')?.message).toBe('Field is required')
   })
+  it('flags whitespace-only strings as blank', () => {
+    const v = rules.required('Name')
+    expect(v(' ')?.message).toBe('Name cannot be blank')
+    expect(v('  \t\n ')?.key).toBe('required')
+    expect(v(' x ')).toBeUndefined()
+  })
+  it('uses the fieldFallback string when attr is empty', () => {
+    expect(rules.required()('')?.message).toBe('This field cannot be blank')
+  })
+})
+
+describe('fieldFallback', () => {
+  it('replaces an empty attr in every attr-based rule', () => {
+    expect(rules.minLen(3)('ab')?.message).toBe('This field should contain at least 3 characters')
+    expect(rules.email()('x')?.message).toBe('This field must be a valid email')
+    expect(rules.between(1, 2)(5)?.message).toBe('This field must be between 1 and 2')
+  })
+  it('honors a setStrings override', () => {
+    setStrings({ fieldFallback: 'Dieses Feld', required: '{attr} darf nicht leer sein' })
+    expect(rules.required()('')?.message).toBe('Dieses Feld darf nicht leer sein')
+  })
+  it('is not used when attr is given', () => {
+    setStrings({ fieldFallback: 'Dieses Feld' })
+    expect(rules.required('Name')('')?.message).toBe('Name cannot be blank')
+  })
+})
+
+describe('whitespace-only strings in non-required rules', () => {
+  it('are not treated as blank outside required/requiredIf', () => {
+    expect(rules.minLen(3)(' ')?.key).toBe('minLen')
+    expect(rules.email()('  ')?.key).toBe('email')
+    expect(rules.pattern(/^\d+$/)(' ')?.key).toBe('pattern')
+  })
 })
 
 describe('minLen / maxLen', () => {
@@ -85,9 +118,38 @@ describe('minNum / maxNum', () => {
     expect(rules.maxNum(5)('abc')).toBeUndefined()
     expect(rules.minNum(5)({})).toBeUndefined()
   })
+  it('never reads whitespace-only strings as 0', () => {
+    expect(rules.minNum(5)(' ')).toBeUndefined()
+    expect(rules.minNum(5)('  \t')).toBeUndefined()
+    expect(rules.maxNum(-1)(' ')).toBeUndefined()
+  })
+  it('skips hex, binary and octal literals as non-numeric', () => {
+    expect(rules.minNum(100)('0x10')).toBeUndefined()
+    expect(rules.maxNum(1)('0b11')).toBeUndefined()
+    expect(rules.maxNum(1)('0o17')).toBeUndefined()
+  })
 })
 
 describe('pattern', () => {
+  it('gives the same result on repeated calls with a /g regex', () => {
+    const v = rules.pattern(/^[a-z]+$/g, 'Slug')
+    expect(v('abc')).toBeUndefined()
+    expect(v('abc')).toBeUndefined()
+    expect(v('ABC')?.key).toBe('pattern')
+    expect(v('abc')).toBeUndefined()
+  })
+  it('gives the same result on repeated calls with a /y regex', () => {
+    const v = rules.pattern(/[a-z]+/y)
+    expect(v('abc')).toBeUndefined()
+    expect(v('abc')).toBeUndefined()
+    expect(v('1abc')?.key).toBe('pattern')
+  })
+  it('does not move lastIndex of the caller regex', () => {
+    const re = /a/g
+    const v = rules.pattern(re)
+    v('a')
+    expect(re.lastIndex).toBe(0)
+  })
   it('flags strings that do not match', () => {
     const v = rules.pattern(/^[A-Z]+$/, 'Code')
     expect(v('abc')?.message).toBe('Code format is invalid')
@@ -151,6 +213,9 @@ describe('integer', () => {
     expect(rules.integer()('abc')).toBeUndefined()
     expect(rules.integer()({})).toBeUndefined()
   })
+  it('skips whitespace-only strings', () => {
+    expect(rules.integer()('   ')).toBeUndefined()
+  })
 })
 
 describe('numeric', () => {
@@ -169,6 +234,21 @@ describe('numeric', () => {
   it('skips empty', () => {
     expect(rules.numeric()('')).toBeUndefined()
     expect(rules.numeric()(null)).toBeUndefined()
+  })
+  it('rejects whitespace-only strings instead of reading them as 0', () => {
+    expect(rules.numeric()(' ')?.key).toBe('numeric')
+    expect(rules.numeric()('\t\n')?.key).toBe('numeric')
+  })
+  it('rejects hex, binary and octal literals', () => {
+    for (const s of ['0x1f', '0X1F', '0b101', '0B1', '0o17', '0O7', ' 0x10', '-0x1', '+0b1']) {
+      expect(rules.numeric()(s)?.key, s).toBe('numeric')
+    }
+  })
+  it('still accepts decimal strings with surrounding spaces, exponents and leading zeros', () => {
+    expect(rules.numeric()(' 42 ')).toBeUndefined()
+    expect(rules.numeric()('1e3')).toBeUndefined()
+    expect(rules.numeric()('007')).toBeUndefined()
+    expect(rules.numeric()('0.5')).toBeUndefined()
   })
 })
 
@@ -191,6 +271,9 @@ describe('between', () => {
   it('skips empty and NaN-coercing values', () => {
     expect(rules.between(1, 10)('')).toBeUndefined()
     expect(rules.between(1, 10)('abc')).toBeUndefined()
+  })
+  it('skips whitespace-only strings instead of reading them as 0', () => {
+    expect(rules.between(1, 10)('  ')).toBeUndefined()
   })
 })
 
@@ -259,12 +342,24 @@ describe('requiredIf', () => {
   it('attaches key=requiredIf', () => {
     expect(rules.requiredIf(() => true)('')?.key).toBe('requiredIf')
   })
+  it('flags whitespace-only strings as blank when active', () => {
+    expect(rules.requiredIf(() => true, 'VAT')('   ')?.message).toBe('VAT cannot be blank')
+    expect(rules.requiredIf(() => false)('   ')).toBeUndefined()
+  })
 })
 
 describe('uuid', () => {
-  it('accepts canonical UUIDs (v1-v8)', () => {
+  it('accepts canonical UUIDs (v1-v8, nil, max)', () => {
     expect(rules.uuid()('550e8400-e29b-41d4-a716-446655440000')).toBeUndefined()
     expect(rules.uuid()('1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed')).toBeUndefined()
+    expect(rules.uuid()('00000000-0000-0000-0000-000000000000')).toBeUndefined()
+    expect(rules.uuid()('ffffffff-ffff-ffff-ffff-ffffffffffff')).toBeUndefined()
+    expect(rules.uuid()('FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF')).toBeUndefined()
+  })
+  it('rejects version 0 and 9+ UUIDs that are neither nil nor max', () => {
+    expect(rules.uuid()('00000000-0000-0000-0000-000000000001')?.key).toBe('uuid')
+    expect(rules.uuid()('550e8400-e29b-91d4-a716-446655440000')?.key).toBe('uuid')
+    expect(rules.uuid()('ffffffff-ffff-ffff-ffff-fffffffffffe')?.key).toBe('uuid')
   })
   it('rejects malformed UUIDs', () => {
     expect(rules.uuid('Id')('not-a-uuid')?.message).toBe('Id must be a valid UUID')
@@ -313,6 +408,12 @@ describe('uniqueIn', () => {
   it('honors an override message', () => {
     const v = rules.uniqueIn([{ sku: 'A' }, { sku: 'A' }], 1, 'sku', 'taken: {value}')
     expect(v('A')?.message).toBe('taken: A')
+  })
+  it('skips empty values even when other rows are empty too', () => {
+    const arr = [{ sku: '' }, { sku: '' }, { sku: null }, { sku: null }]
+    expect(rules.uniqueIn(arr, 1, 'sku')('')).toBeUndefined()
+    expect(rules.uniqueIn(arr, 3, 'sku')(null)).toBeUndefined()
+    expect(rules.uniqueIn([{ tags: [] }, { tags: [] }], 1, 'tags')([])).toBeUndefined()
   })
 })
 

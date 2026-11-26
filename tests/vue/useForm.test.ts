@@ -27,7 +27,7 @@ function withForm(child: ReturnType<typeof defineComponent>): {
 }
 
 describe('useForm', () => {
-  it('throws when called outside <Form>', () => {
+  it('throws when called outside useProvideForm()', () => {
     const Inner = defineComponent({
       setup() {
         useForm()
@@ -35,6 +35,18 @@ describe('useForm', () => {
       },
     })
     expect(() => mount(Inner)).toThrow(/useForm/)
+  })
+
+  it('returns the provided context under useProvideForm', () => {
+    let found!: FormContext
+    const Inner = defineComponent({
+      setup() {
+        found = useForm()
+        return () => null
+      },
+    })
+    const { ctx } = withForm(Inner)
+    expect(found).toBe(ctx)
   })
 
   it('useProvideForm returns a usable context', () => {
@@ -235,6 +247,107 @@ describe('useField (mounted under a form)', () => {
     expect(ctx.getField('parts.0.sku')!.errors).toEqual([{ message: 'pat' }])
   })
 
+  it('addFieldValidatorsByPattern disposer removes the validators; re-adding gives a single error', () => {
+    const Inner = defineComponent({
+      setup() {
+        const m = ref('')
+        useField({ attribute: 'parts.0.sku', modelValue: m })
+        return () => null
+      },
+    })
+    const { ctx } = withForm(Inner)
+    const pat: Validator = () => ({ message: 'pat' })
+    const dispose = ctx.addFieldValidatorsByPattern('parts.*.sku', [pat])
+    dispose()
+    expect(ctx.validateAll()).toBe(true)
+    ctx.addFieldValidatorsByPattern('parts.*.sku', [pat])
+    expect(ctx.validateAll()).toBe(false)
+    expect(ctx.getField('parts.0.sku')!.errors).toEqual([{ message: 'pat' }])
+  })
+
+  it('setFieldErrors returns true for a registered field and false otherwise', () => {
+    const Inner = defineComponent({
+      setup() {
+        const m = ref('')
+        useField({ attribute: 'a', modelValue: m })
+        return () => null
+      },
+    })
+    const { ctx } = withForm(Inner)
+    expect(ctx.setFieldErrors('a', [{ message: 'x' }])).toBe(true)
+    expect(ctx.setFieldErrors('missing', [{ message: 'y' }])).toBe(false)
+    expect(ctx.getField('missing')).toBeUndefined()
+  })
+
+  it('validateAll in the same tick as a model change validates the new value', () => {
+    const m = ref('')
+    let api!: ReturnType<typeof useField>
+    const Inner = defineComponent({
+      setup() {
+        api = useField({ attribute: 'name', modelValue: m, validators: [rules.required('Name')] })
+        return () => null
+      },
+    })
+    const { ctx } = withForm(Inner)
+    m.value = 'filled'
+    expect(ctx.validateAll()).toBe(true)
+    m.value = ''
+    expect(api.validate()[0].message).toBe('Name cannot be blank')
+  })
+
+  it('validateAllAsync in the same tick as a model change validates the new value', async () => {
+    const m = ref('taken')
+    const Inner = defineComponent({
+      setup() {
+        useField({
+          attribute: 'a',
+          modelValue: m,
+          validators: [async (v) => (v === 'taken' ? { message: 'busy' } : undefined)],
+        })
+        return () => null
+      },
+    })
+    const { ctx } = withForm(Inner)
+    m.value = 'free'
+    expect(await ctx.validateAllAsync()).toBe(true)
+  })
+
+  it('errors from setFieldErrors survive blur and validateAll until the value changes', async () => {
+    const m = ref('taken@example.com')
+    let api!: ReturnType<typeof useField>
+    const Inner = defineComponent({
+      setup() {
+        api = useField({ attribute: 'email', modelValue: m, validators: [rules.required('Email')] })
+        return () => null
+      },
+    })
+    const { ctx } = withForm(Inner)
+    ctx.setFieldErrors('email', [{ message: 'already taken' }])
+    api.onBlur()
+    expect(api.errors.value).toEqual([{ message: 'already taken' }])
+    expect(ctx.validateAll()).toBe(false)
+    m.value = 'other@example.com'
+    await nextTick()
+    expect(api.errors.value).toEqual([])
+    expect(ctx.getField('email')!.errors).toEqual([])
+  })
+
+  it('setFieldErrors after a same-tick model change keeps the errors for the new value', async () => {
+    const m = ref('old')
+    let api!: ReturnType<typeof useField>
+    const Inner = defineComponent({
+      setup() {
+        api = useField({ attribute: 'a', modelValue: m })
+        return () => null
+      },
+    })
+    const { ctx } = withForm(Inner)
+    m.value = 'new'
+    ctx.setFieldErrors('a', [{ message: 'server says no' }])
+    await nextTick()
+    expect(api.errors.value).toEqual([{ message: 'server says no' }])
+  })
+
   it('setFormErrors writes form-level errors', () => {
     const Probe = defineComponent({ setup() { return () => null } })
     const { ctx } = withForm(Probe)
@@ -280,6 +393,12 @@ describe('useFormOptional', () => {
     })
     expect(() => mount(Inner)).not.toThrow()
     expect(found).toBeUndefined()
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('returns undefined without warning when called outside setup', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(useFormOptional()).toBeUndefined()
     expect(warn).not.toHaveBeenCalled()
   })
 

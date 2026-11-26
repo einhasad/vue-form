@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, type ComputedRef, type Ref } from 'vue'
 import { Field } from '../headless/Field'
 import type { FieldError, FieldHandle, Validator } from '../headless/types'
 import { useFormOptional } from './useForm'
@@ -9,7 +9,16 @@ export interface UseFieldOptions {
   validators?: Validator[]
 }
 
-export function useField(opts: UseFieldOptions) {
+export interface UseFieldReturn {
+  errors: Ref<FieldError[]>
+  isInvalid: ComputedRef<boolean>
+  firstError: ComputedRef<FieldError | undefined>
+  validate: () => FieldError[]
+  validateAsync: () => Promise<FieldError[]>
+  onBlur: () => FieldError[]
+}
+
+export function useField(opts: UseFieldOptions): UseFieldReturn {
   const formCtx = useFormOptional()
   const errors = ref<FieldError[]>([])
 
@@ -23,6 +32,12 @@ export function useField(opts: UseFieldOptions) {
     errors.value = [...field.errors]
   }
 
+  // The watcher below runs after the current tick, so code that changes the
+  // model and validates in the same tick would see the old value without this.
+  const pullModel = () => {
+    field.value = opts.modelValue.value
+  }
+
   // Mirror the Vue model into the headless field. If errors are already shown,
   // re-validate inline so the user sees them clear/update as they type.
   watch(opts.modelValue, (v) => {
@@ -34,12 +49,14 @@ export function useField(opts: UseFieldOptions) {
   })
 
   const validate = (): FieldError[] => {
+    pullModel()
     field.validate()
     sync()
     return errors.value
   }
 
   const validateAsync = async (): Promise<FieldError[]> => {
+    pullModel()
     await field.validateAsync()
     sync()
     return errors.value
@@ -53,22 +70,23 @@ export function useField(opts: UseFieldOptions) {
       return field.errors
     },
     validate: () => {
-      field.validate()
-      sync()
+      validate()
       return field.errors
     },
     validateAsync: async () => {
-      await field.validateAsync()
-      sync()
+      await validateAsync()
       return field.errors
     },
     setValidators: (vs) => field.setValidators(vs),
     addValidator: (v) => field.addValidator(v),
+    removeValidator: (v) => field.removeValidator(v),
     setErrors: (es) => {
+      pullModel()
       field.setErrors(es)
       sync()
     },
     addError: (e) => {
+      pullModel()
       field.addError(e)
       sync()
     },

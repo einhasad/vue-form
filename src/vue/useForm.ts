@@ -1,4 +1,4 @@
-import { provide, inject, ref, type InjectionKey, type Ref } from 'vue'
+import { hasInjectionContext, provide, inject, ref, type InjectionKey, type Ref } from 'vue'
 import { Form } from '../headless/Form'
 import { getStrings } from '../headless/strings'
 import type { FieldError, FieldHandle, Validator } from '../headless/types'
@@ -17,10 +17,10 @@ export interface FormContext {
   hasErrors(): boolean
   clearErrors(): void
 
-  setFieldErrors(attribute: string, errors: FieldError[]): void
+  setFieldErrors(attribute: string, errors: FieldError[]): boolean
   setFieldValidators(attribute: string, validators: Validator[]): void
   addFieldValidator(attribute: string, validator: Validator): void
-  addFieldValidatorsByPattern(pattern: string, validators: Validator[]): void
+  addFieldValidatorsByPattern(pattern: string, validators: Validator[]): () => void
 
   setFormErrors(errors: FieldError[]): void
 
@@ -55,7 +55,9 @@ export function useProvideForm(): FormContext {
     },
 
     setFieldErrors(attribute, errors) {
-      form.getField(attribute)?.setErrors(errors)
+      const field = form.getField(attribute)
+      field?.setErrors(errors)
+      return field !== undefined
     },
     setFieldValidators(attribute, validators) {
       form.setFieldValidators(attribute, validators)
@@ -64,7 +66,7 @@ export function useProvideForm(): FormContext {
       form.addFieldValidator(attribute, validator)
     },
     addFieldValidatorsByPattern(pattern, validators) {
-      form.addFieldValidatorsByPattern(pattern, validators)
+      return form.addFieldValidatorsByPattern(pattern, validators)
     },
 
     setFormErrors(errors) {
@@ -86,7 +88,7 @@ export function useForm(): FormContext {
 }
 
 // For widgets that also work standalone: undefined (no warning, no throw)
-// when there is no useProvideForm ancestor.
+// when there is no useProvideForm ancestor or no setup/injection context.
 export function useFormOptional(): FormContext | undefined {
-  return inject(FORM_KEY, undefined)
+  return hasInjectionContext() ? inject(FORM_KEY, undefined) : undefined
 }

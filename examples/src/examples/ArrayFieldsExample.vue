@@ -55,6 +55,7 @@ function check() {
             <TextField
               v-model="row.sku"
               :attribute="`parts.${i}.sku`"
+              :aria-label="`SKU, row ${i + 1}`"
               :validators="[rules.uniqueIn(parts, i, 'sku')]"
             />
           </td>
@@ -62,6 +63,7 @@ function check() {
             <TextField
               v-model="row.qty"
               :attribute="`parts.${i}.qty`"
+              :aria-label="`Qty, row ${i + 1}`"
               type="number"
             />
           </td>
@@ -69,6 +71,7 @@ function check() {
             <button
               type="button"
               class="ds-btn ds-btn--ghost ds-btn--sm"
+              :aria-label="`Remove row ${i + 1}`"
               @click="removeRow(i)"
             >
               Remove

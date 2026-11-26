@@ -34,7 +34,7 @@ async function onSubmit() {
     <TextField
       v-model="data.vin"
       attribute="vin"
-      label="VIN — type `TAKEN…` to trigger async failure"
+      label="VIN — type “TAKEN…” to trigger async failure"
       placeholder="e.g. 1HGCM82633A004352"
       :validators="[rules.required('VIN'), vinUnique]"
     />

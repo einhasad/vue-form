@@ -44,7 +44,7 @@ function check() {
     <TextField
       v-model="data.zip"
       attribute="zip"
-      label="ZIP (pattern \\d{5})"
+      label="ZIP (pattern \d{5})"
       :validators="[rules.pattern(/^\d{5}$/, 'ZIP', 'Must be 5 digits')]"
     />
     <TextField

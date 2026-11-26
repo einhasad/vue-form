@@ -18,6 +18,7 @@ async function onSubmit() {
 <template>
   <form
     class="demo-form"
+    novalidate
     @submit.prevent="onSubmit"
   >
     <TextField

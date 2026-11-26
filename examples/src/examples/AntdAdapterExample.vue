@@ -38,7 +38,10 @@ function check() {
       v-slot="{ field }"
     >
       <a-input
+        :id="field.id"
         v-model:value="field.value"
+        :aria-invalid="field.invalid"
+        :aria-describedby="field.errorId"
         :status="field.status"
         @blur="field.onBlur"
       />
@@ -52,6 +55,7 @@ function check() {
       v-slot="{ field }"
     >
       <a-select
+        :id="field.id"
         v-model:value="field.value"
         :options="categoryOptions"
         :status="field.status"
@@ -67,6 +71,7 @@ function check() {
       v-slot="{ field }"
     >
       <a-date-picker
+        :id="field.id"
         v-model:value="field.value"
         :status="field.status"
         style="width: 100%"
@@ -82,7 +87,10 @@ function check() {
       v-slot="{ field }"
     >
       <a-checkbox
+        :id="field.id"
         v-model:checked="field.value"
+        :aria-invalid="field.invalid"
+        :aria-describedby="field.errorId"
         @blur="field.onBlur"
       >
         I accept the terms

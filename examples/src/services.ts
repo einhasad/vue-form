@@ -62,8 +62,8 @@ export const partLookupApi = {
     if (!q) return []
     const seed = ['Wheel', 'Engine', 'Door', 'Seat', 'Mirror', 'Battery']
     return seed
-      .filter((n) => n.toLowerCase().includes(q.toLowerCase()))
-      .map((name, i) => ({ id: i + 1, name: `${name} (${q})` }))
+      .map((name, i) => ({ id: i + 1, name }))
+      .filter((part) => part.name.toLowerCase().includes(q.toLowerCase()))
   },
 }
 

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import {
   useProvideForm,
   rules,
+  type FieldError,
   type Validator,
 } from '@einhasad-vue/vue-form'
 import { FormField } from '@einhasad-vue/vue-form/ant-design'
@@ -17,6 +18,8 @@ const formCtx = useProvideForm()
 const formErrors = formCtx.formErrors
 const loading = formCtx.loading
 const submitted = ref<unknown>(null)
+
+type PickupRange = [string | null, string | null]
 
 interface Part {
   id: number | string | null
@@ -36,15 +39,46 @@ const data = ref({
   price: 0 as number | null,
   ownerPhone: '',
   releaseDate: null as unknown,
-  pickupRange: null as unknown,
+  pickupRange: null as PickupRange | null,
   showtime: null as unknown,
-  primaryPart: null as { id: number | string; name: string } | null,
   primaryPartId: null as number | string | null,
   acceptsTerms: false,
   parts: [
     { id: null, sku: '', qty: 1, note: '' } as Part,
   ],
 })
+
+function pickupDate(index: 0 | 1) {
+  return computed<string | null>({
+    get: () => data.value.pickupRange?.[index] ?? null,
+    set: (v) => {
+      const next: PickupRange = [...(data.value.pickupRange ?? [null, null])]
+      next[index] = v || null
+      data.value.pickupRange = next.every((d) => d === null) ? null : next
+    },
+  })
+}
+
+const pickupStart = pickupDate(0)
+const pickupEnd = pickupDate(1)
+
+const pickupStartValidators: Validator[] = [
+  (start) =>
+    !start && pickupEnd.value
+      ? { message: 'Pick a start date for the pickup window', key: 'pickupStartMissing' }
+      : undefined,
+]
+
+const pickupEndValidators: Validator[] = [
+  (end) => {
+    const start = pickupStart.value
+    if (start && !end) return { message: 'Pick an end date for the pickup window', key: 'pickupEndMissing' }
+    if (start && typeof end === 'string' && end < start) {
+      return { message: 'Pickup end date must be on or after the start date', key: 'pickupOrder' }
+    }
+    return undefined
+  },
+]
 
 const categoryOptions = [
   { value: 'sedan', label: 'Sedan' },
@@ -79,20 +113,60 @@ async function onPartSearch(query: string) {
   }
 }
 
-function buildValidator(r: ServerRule): Validator {
-  if (r.kind === 'required') return rules.required()
-  if (r.kind === 'minLen')   return rules.minLen(r.n)
-  if (r.kind === 'maxLen')   return rules.maxLen(r.n)
-  if (r.kind === 'minNum')   return rules.minNum(r.n)
-  if (r.kind === 'maxNum')   return rules.maxNum(r.n)
-  if (r.kind === 'pattern')  return rules.pattern(new RegExp(r.re))
+const schemaLabels: Record<string, string> = {
+  name: 'Name',
+  description: 'Description',
+  'parts.*.sku': 'SKU',
+  'parts.*.qty': 'Qty',
+}
+
+const clientRules: Record<string, ServerRule[]> = {
+  name: [{ kind: 'required' }],
+}
+
+function buildValidator(r: ServerRule, label?: string): Validator {
+  if (r.kind === 'required') return rules.required(label)
+  if (r.kind === 'minLen')   return rules.minLen(r.n, label)
+  if (r.kind === 'maxLen')   return rules.maxLen(r.n, label)
+  if (r.kind === 'minNum')   return rules.minNum(r.n, label)
+  if (r.kind === 'maxNum')   return rules.maxNum(r.n, label)
+  if (r.kind === 'pattern')  return rules.pattern(new RegExp(r.re), label)
   throw new Error(`unknown server rule kind: ${(r as { kind: string }).kind}`)
+}
+
+function buildValidators(key: string, ruleList: ServerRule[]): Validator[] {
+  return ruleList.map((r) => buildValidator(r, schemaLabels[key]))
+}
+
+function mergeRules(client: ServerRule[] = [], server: ServerRule[]): ServerRule[] {
+  return [...client, ...server.filter((s) => !client.some((c) => c.kind === s.kind))]
 }
 
 // --- Submit orchestration (replacing what <Form> used to do) -----------
 async function onSubmit() {
+  if (loading.value) return
+  loading.value = true
+  try {
+    await validateAndSave()
+  } finally {
+    loading.value = false
+  }
+}
+
+async function trimName() {
+  data.value.name = data.value.name.trim()
+  await nextTick()
+}
+
+async function onNameBlur(onBlur: () => void) {
+  await trimName()
+  onBlur()
+}
+
+async function validateAndSave() {
   formCtx.clearErrors()
   submitted.value = null
+  await trimName()
   if (!formCtx.validateAll()) {
     log('info', 'sync validation blocked submit')
     return
@@ -101,17 +175,14 @@ async function onSubmit() {
     log('info', 'async validation blocked submit')
     return
   }
-  loading.value = true
   try {
-    const payload = { ...data.value, name: data.value.name.trim() }
+    const payload = { ...data.value }
     log('submit', 'vehicleApi.create called', payload)
     const result = await vehicleApi.create(payload)
     submitted.value = result
     log('success', 'form submitted', result)
   } catch (raw) {
     onFail(raw)
-  } finally {
-    loading.value = false
   }
 }
 
@@ -119,10 +190,16 @@ function onFail(raw: unknown) {
   const r = raw as { response?: { status?: number; data?: { result?: { field: string; message: string }[] } }; message?: string }
   if (r?.response?.status === 422 && Array.isArray(r.response.data?.result)) {
     log('fail', `422 — ${r.response.data!.result.length} field error(s)`, r.response.data)
+    const unmatched: FieldError[] = []
     for (const e of r.response.data.result) {
-      formCtx.setFieldErrors(e.field, [{ message: e.message }])
-      log('field-error', `${e.field}: ${e.message}`)
+      if (formCtx.setFieldErrors(e.field, [{ message: e.message }])) {
+        log('field-error', `${e.field}: ${e.message}`)
+      } else {
+        unmatched.push({ message: `${e.field}: ${e.message}` })
+        log('fail', `no field "${e.field}" on the form, shown as a form error`)
+      }
     }
+    formCtx.setFormErrors(unmatched)
     return
   }
   log('fail', 'submit failed', raw)
@@ -137,6 +214,12 @@ function resetErrors() {
 }
 
 // --- Parts array (replacing what <NestedForm> used to do) --------------
+const liveParts = {
+  get value() {
+    return data.value.parts
+  },
+}
+
 function newPart(): Part {
   return { id: null, sku: '', qty: 1, note: '' }
 }
@@ -168,11 +251,10 @@ onMounted(async () => {
   const schema = await validationApi.getSchema('vehicle')
   log('info', `loaded validation schema (${Object.keys(schema).length} key(s))`, schema)
   for (const [key, ruleList] of Object.entries(schema)) {
-    const validators = ruleList.map(buildValidator)
     if (key.includes('*')) {
-      formCtx.addFieldValidatorsByPattern(key, validators)
+      formCtx.addFieldValidatorsByPattern(key, buildValidators(key, ruleList))
     } else {
-      formCtx.setFieldValidators(key, validators)
+      formCtx.setFieldValidators(key, buildValidators(key, mergeRules(clientRules[key], ruleList)))
     }
   }
 
@@ -201,6 +283,9 @@ onMounted(async () => {
         v-slot="{ field }"
       >
         <a-input
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
           :status="field.status"
           placeholder="17-character VIN (try `TAKEN…` to trigger async uniqueness)"
@@ -213,14 +298,17 @@ onMounted(async () => {
         attribute="name"
         label="Name"
         required
-        :validators="[rules.required('Name')]"
+        :validators="buildValidators('name', clientRules.name)"
         v-slot="{ field }"
       >
         <a-input
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
           :status="field.status"
           placeholder="Try `reject` for a 422 response, `crash` for a network error"
-          @blur="field.onBlur"
+          @blur="onNameBlur(field.onBlur)"
         />
       </FormField>
 
@@ -231,6 +319,9 @@ onMounted(async () => {
         v-slot="{ field }"
       >
         <a-textarea
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
           :status="field.status"
           @blur="field.onBlur"
@@ -246,6 +337,9 @@ onMounted(async () => {
         v-slot="{ field }"
       >
         <a-select
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
           :options="categoryOptions"
           :status="field.status"
@@ -261,8 +355,13 @@ onMounted(async () => {
         v-slot="{ field }"
       >
         <a-checkbox-group
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
           :options="featureOptions"
+          role="group"
+          aria-label="Features"
         />
       </FormField>
 
@@ -273,8 +372,13 @@ onMounted(async () => {
         v-slot="{ field }"
       >
         <a-radio-group
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
           :options="fuelOptions"
+          role="radiogroup"
+          aria-label="Fuel"
         />
       </FormField>
 
@@ -284,7 +388,13 @@ onMounted(async () => {
         label="Active in catalog"
         v-slot="{ field }"
       >
-        <a-switch v-model:checked="field.value" />
+        <a-switch
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
+          v-model:checked="field.value"
+          aria-label="Active in catalog"
+        />
       </FormField>
 
       <FormField
@@ -295,6 +405,9 @@ onMounted(async () => {
         v-slot="{ field }"
       >
         <a-input-number
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
           :status="field.status"
           :step="0.01"
@@ -310,6 +423,9 @@ onMounted(async () => {
         v-slot="{ field }"
       >
         <a-input
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
           :status="field.status"
           @blur="field.onBlur"
@@ -325,26 +441,55 @@ onMounted(async () => {
         v-slot="{ field }"
       >
         <a-date-picker
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
+          value-format="YYYY-MM-DD"
           :status="field.status"
           style="width: 100%"
           @blur="field.onBlur"
         />
       </FormField>
 
-      <FormField
-        v-model="data.pickupRange"
-        attribute="pickupRange"
-        label="Pickup window"
-        v-slot="{ field }"
-      >
-        <a-range-picker
-          v-model:value="field.value"
-          :status="field.status"
-          style="width: 100%"
-          @blur="field.onBlur"
-        />
-      </FormField>
+      <div class="pickup-window">
+        <FormField
+          v-model="pickupStart"
+          attribute="pickupRange.0"
+          label="Pickup window start"
+          :validators="pickupStartValidators"
+          v-slot="{ field }"
+        >
+          <a-date-picker
+            :id="field.id"
+            :aria-invalid="field.invalid"
+            :aria-describedby="field.errorId"
+            v-model:value="field.value"
+            value-format="YYYY-MM-DD"
+            :status="field.status"
+            style="width: 100%"
+            @blur="field.onBlur"
+          />
+        </FormField>
+        <FormField
+          v-model="pickupEnd"
+          attribute="pickupRange.1"
+          label="Pickup window end"
+          :validators="pickupEndValidators"
+          v-slot="{ field }"
+        >
+          <a-date-picker
+            :id="field.id"
+            :aria-invalid="field.invalid"
+            :aria-describedby="field.errorId"
+            v-model:value="field.value"
+            value-format="YYYY-MM-DD"
+            :status="field.status"
+            style="width: 100%"
+            @blur="field.onBlur"
+          />
+        </FormField>
+      </div>
 
       <FormField
         v-model="data.showtime"
@@ -353,7 +498,12 @@ onMounted(async () => {
         v-slot="{ field }"
       >
         <a-time-picker
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
+          value-format="HH:mm"
+          format="HH:mm"
           :status="field.status"
           style="width: 100%"
           @blur="field.onBlur"
@@ -362,13 +512,16 @@ onMounted(async () => {
 
       <FormField
         v-model="data.primaryPartId"
-        attribute="primaryPart"
+        attribute="primaryPartId"
         label="Primary part"
         required
         :validators="[rules.required('Primary part')]"
         v-slot="{ field }"
       >
         <a-select
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
           v-model:value="field.value"
           :options="partSearchOptions"
           :loading="partSearching"
@@ -391,7 +544,14 @@ onMounted(async () => {
         ]"
         v-slot="{ field }"
       >
-        <a-checkbox v-model:checked="field.value">I accept the terms</a-checkbox>
+        <a-checkbox
+          :id="field.id"
+          :aria-invalid="field.invalid"
+          :aria-describedby="field.errorId"
+          v-model:checked="field.value"
+        >
+          I accept the terms
+        </a-checkbox>
       </FormField>
 
       <h3 class="parts-heading">Parts</h3>
@@ -418,7 +578,7 @@ onMounted(async () => {
                 :attribute="`parts.${index}.sku`"
                 :label="false"
                 :validators="[
-                  rules.uniqueIn(data.parts, index, 'sku'),
+                  rules.uniqueIn(liveParts, index, 'sku'),
                   async (v) => {
                     if (!v) return undefined
                     const taken = await validationApi.isSkuTaken(String(v))
@@ -428,6 +588,10 @@ onMounted(async () => {
                 v-slot="{ field }"
               >
                 <a-input
+                  :id="field.id"
+                  :aria-invalid="field.invalid"
+                  :aria-describedby="field.errorId"
+                  :aria-label="`SKU, row ${index + 1}`"
                   v-model:value="field.value"
                   :status="field.status"
                   @blur="field.onBlur"
@@ -442,6 +606,10 @@ onMounted(async () => {
                 v-slot="{ field }"
               >
                 <a-input-number
+                  :id="field.id"
+                  :aria-invalid="field.invalid"
+                  :aria-describedby="field.errorId"
+                  :aria-label="`Qty, row ${index + 1}`"
                   v-model:value="field.value"
                   :status="field.status"
                   style="width: 100%"
@@ -457,6 +625,10 @@ onMounted(async () => {
                 v-slot="{ field }"
               >
                 <a-input
+                  :id="field.id"
+                  :aria-invalid="field.invalid"
+                  :aria-describedby="field.errorId"
+                  :aria-label="`Note, row ${index + 1}`"
                   v-model:value="field.value"
                   :status="field.status"
                   @blur="field.onBlur"
@@ -493,6 +665,11 @@ onMounted(async () => {
 
 <style scoped>
 .fields { border: none; padding: 0; }
+.pickup-window {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  column-gap: 1rem;
+}
 .actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
 .parts-heading { margin: 1.5rem 0 0.5rem; font-size: 1rem; }
 .parts-toolbar {

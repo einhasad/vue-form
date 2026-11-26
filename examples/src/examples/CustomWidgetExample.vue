@@ -1,9 +1,18 @@
+<script lang="ts">
+let idCounter = 0
+
+function nextId(): number {
+  idCounter += 1
+  return idCounter
+}
+</script>
+
 <script setup lang="ts">
 import { computed, defineComponent, h, ref } from 'vue'
 import { useProvideForm, useField, type Validator } from '@einhasad-vue/vue-form'
 
 // A widget is anything that calls `useField`. Below is a complete one in
-// ~25 lines — a number slider with built-in label + error.
+// ~30 lines — a number slider with built-in label + error.
 const PrioritySlider = defineComponent({
   name: 'PrioritySlider',
   props: {
@@ -18,17 +27,21 @@ const PrioritySlider = defineComponent({
       set: (v) => emit('update:modelValue', v),
     })
     const f = useField({ attribute: props.attribute, modelValue: value, validators: props.validators })
+    const id = `priority-slider-${nextId()}`
+    const errorId = `${id}-error`
     return () =>
       h('div', { class: 'demo-field' }, [
-        h('label', { class: 'demo-label' }, `Priority (${value.value})`),
+        h('label', { class: 'demo-label', for: id }, `Priority (${value.value})`),
         h('input', {
-          type: 'range', min: 1, max: 5, step: 1,
+          id, type: 'range', min: 1, max: 5, step: 1,
           value: value.value,
+          'aria-invalid': f.isInvalid.value,
+          'aria-describedby': f.firstError.value ? errorId : undefined,
           onInput: (e: Event) => (value.value = Number((e.target as HTMLInputElement).value)),
           onBlur: f.onBlur,
         }),
         f.firstError.value
-          ? h('div', { class: 'demo-error' }, f.firstError.value.message)
+          ? h('div', { id: errorId, class: 'demo-error', role: 'alert' }, f.firstError.value.message)
           : null,
       ])
   },

@@ -1,9 +1,13 @@
 <template>
   <a-config-provider :theme="antdTheme">
+  <a
+    class="ds-skip-link"
+    href="#main"
+  >Skip to content</a>
   <header class="ds-header">
     <div class="ds-header__inner">
       <a
-        href="/"
+        :href="baseUrl"
         class="ds-header__brand"
       >
         <svg
@@ -27,17 +31,19 @@
           />
         </svg>
         <span class="ds-header__wordmark">
-          <span class="ds-header__wordmark-scope">@einhasad/</span>vue-form
+          <span class="ds-header__wordmark-scope">{{ libScope }}</span>{{ libShortName }}
         </span>
         <span class="ds-header__version">v{{ version }}</span>
       </a>
       <nav class="ds-header__nav">
         <a
-          href="/"
+          href="#introduction"
           class="is-active"
+          @click.prevent="scrollTo('introduction')"
         >Docs</a>
         <a
           href="https://github.com/einhasad/vue-form"
+          class="ds-header__gh-text"
           target="_blank"
           rel="noopener"
         >GitHub</a>
@@ -64,89 +70,67 @@
 
   <div class="ds-layout ds-layout--no-toc">
     <aside class="ds-sidebar">
-      <div class="ds-sidebar__group">
-        <span class="ds-caps ds-sidebar__label">Getting started</span>
-        <ul>
-          <li
-            v-for="s in nav.gettingStarted"
-            :key="s.id"
-          >
-            <a
-              :href="`#${s.id}`"
-              class="ds-sidebar__link"
-              :class="{ 'is-active': activeSection === s.id }"
-              @click.prevent="scrollTo(s.id)"
-            >{{ s.label }}</a>
-          </li>
-        </ul>
-      </div>
-      <div class="ds-sidebar__group">
-        <span class="ds-caps ds-sidebar__label">Validation</span>
-        <ul>
-          <li
-            v-for="s in nav.validation"
-            :key="s.id"
-          >
-            <a
-              :href="`#${s.id}`"
-              class="ds-sidebar__link"
-              :class="{ 'is-active': activeSection === s.id }"
-              @click.prevent="scrollTo(s.id)"
-            >{{ s.label }}</a>
-          </li>
-        </ul>
-      </div>
-      <div class="ds-sidebar__group">
-        <span class="ds-caps ds-sidebar__label">Form orchestration</span>
-        <ul>
-          <li
-            v-for="s in nav.orchestration"
-            :key="s.id"
-          >
-            <a
-              :href="`#${s.id}`"
-              class="ds-sidebar__link"
-              :class="{ 'is-active': activeSection === s.id }"
-              @click.prevent="scrollTo(s.id)"
-            >{{ s.label }}</a>
-          </li>
-        </ul>
-      </div>
-      <div class="ds-sidebar__group">
-        <span class="ds-caps ds-sidebar__label">Adapters &amp; patterns</span>
-        <ul>
-          <li
-            v-for="s in nav.adapters"
-            :key="s.id"
-          >
-            <a
-              :href="`#${s.id}`"
-              class="ds-sidebar__link"
-              :class="{ 'is-active': activeSection === s.id }"
-              @click.prevent="scrollTo(s.id)"
-            >{{ s.label }}</a>
-          </li>
-        </ul>
-      </div>
-      <div class="ds-sidebar__group">
-        <span class="ds-caps ds-sidebar__label">Real-world</span>
-        <ul>
-          <li
-            v-for="s in nav.realworld"
-            :key="s.id"
-          >
-            <a
-              :href="`#${s.id}`"
-              class="ds-sidebar__link"
-              :class="{ 'is-active': activeSection === s.id }"
-              @click.prevent="scrollTo(s.id)"
-            >{{ s.label }}</a>
-          </li>
-        </ul>
-      </div>
+      <nav aria-label="Sections">
+        <div
+          v-for="group in navGroups"
+          :key="group.label"
+          class="ds-sidebar__group"
+        >
+          <span class="ds-caps ds-sidebar__label">{{ group.label }}</span>
+          <ul>
+            <li
+              v-for="s in group.items"
+              :key="s.id"
+            >
+              <a
+                :href="`#${s.id}`"
+                class="ds-sidebar__link"
+                :class="{ 'is-active': activeSection === s.id }"
+                :aria-current="activeSection === s.id ? 'location' : undefined"
+                @click.prevent="scrollTo(s.id)"
+              >{{ s.label }}</a>
+            </li>
+          </ul>
+        </div>
+      </nav>
     </aside>
 
-    <main class="ds-main ds-prose">
+    <main
+      id="main"
+      class="ds-main ds-prose"
+    >
+      <details
+        ref="mobileNav"
+        class="ds-mobile-nav"
+      >
+        <summary class="ds-mobile-nav__summary">
+          Sections
+        </summary>
+        <nav aria-label="Sections">
+          <div
+            v-for="group in navGroups"
+            :key="group.label"
+            class="ds-mobile-nav__group"
+          >
+            <span class="ds-caps ds-sidebar__label">{{ group.label }}</span>
+            <ul>
+              <li
+                v-for="s in group.items"
+                :key="s.id"
+              >
+                <a
+                  :href="`#${s.id}`"
+                  class="ds-sidebar__link"
+                  :class="{ 'is-active': activeSection === s.id }"
+                  :aria-current="activeSection === s.id ? 'location' : undefined"
+                  @click.prevent="scrollFromMobileNav(s.id)"
+                >{{ s.label }}</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </details>
+
       <section class="ds-hero">
         <div class="ds-hero__grid-bg" />
         <div class="ds-hero__content">
@@ -161,7 +145,7 @@
             A fully headless Vue 3 form library: form state, field state, validation,
             and a wildcard-pattern API for array-field rules. Bring your own UI kit —
             or use the optional Ant Design adapter at
-            <code>@einhasad-vue/vue-form/ant-design</code>.
+            <code>{{ libName }}/ant-design</code>.
           </p>
           <div class="ds-hero__ctas">
             <div class="ds-install">
@@ -227,15 +211,17 @@
         Introduction
       </h2>
       <p class="ds-lede">
-        <code>@einhasad-vue/vue-form</code> ships <strong>no components</strong>, no widgets,
-        no styling. The main entry is composables, headless classes, and validator factories —
-        nothing else.
+        The main entry of <code>{{ libName }}</code> ships <strong>no components</strong>,
+        no widgets, no styling: composables, validator factories, strings and types. The
+        <code>Form</code> / <code>Field</code> classes live in <code>{{ libName }}/headless</code>.
       </p>
       <p>
         Wrap your form in <code>useProvideForm()</code>, build any widget that calls
         <code>useField</code>, and you have a working form. Want Ant Design?
-        Import widgets from <code>@einhasad-vue/vue-form/ant-design</code> — same surface,
-        zero antd code in the core bundle.
+        <code>{{ libName }}/ant-design</code> exports one component, <code>FormField</code>:
+        a scoped-slot wrapper around <code>&lt;a-form-item&gt;</code> that calls
+        <code>useField</code> and hands your antd control <code>{ field }</code>
+        (<code>value</code>, <code>status</code>, <code>onBlur</code>, errors). Zero antd code in the main entry.
       </p>
 
       <div class="ds-concept-grid">
@@ -332,15 +318,20 @@
       >
         <h2>API Reference</h2>
         <p>
-          The full surface of <code>@einhasad-vue/vue-form</code>: composables you import,
-          methods on the <code>FormContext</code>, validator factories, and adapter
+          The full surface of <code>{{ libName }}</code>: composables you import,
+          methods on the <code>FormContext</code>, validator factories, strings, and
           subpaths.
         </p>
 
         <h3 class="ds-api-heading">
           Composables
         </h3>
-        <div class="ds-api-table-wrap">
+        <div
+          class="ds-api-table-wrap"
+          role="region"
+          aria-label="Composables table"
+          tabindex="0"
+        >
           <table class="ds-api-table">
             <thead>
               <tr>
@@ -361,9 +352,14 @@
                 <td>Returns the nearest provided form context. Throws if there isn't one.</td>
               </tr>
               <tr>
+                <td><code>useFormOptional()</code></td>
+                <td><code>FormContext | undefined</code></td>
+                <td>Same lookup as <code>useForm()</code>, but returns <code>undefined</code> without a provider. Never throws, no injection warning. For widgets that also work standalone.</td>
+              </tr>
+              <tr>
                 <td><code>useField(opts)</code></td>
                 <td><code>{ errors, isInvalid, firstError, validate, validateAsync, onBlur }</code></td>
-                <td>Registers a field on mount, unregisters on unmount. <code>opts: { attribute, modelValue, validators? }</code>.</td>
+                <td>Inside a form: registers on mount, unregisters on unmount. Without a form: skips registration and validates locally with the same return shape. <code>opts: { attribute, modelValue, validators? }</code>; <code>attribute</code> and <code>validators</code> are read once at setup.</td>
               </tr>
             </tbody>
           </table>
@@ -372,7 +368,12 @@
         <h3 class="ds-api-heading">
           FormContext
         </h3>
-        <div class="ds-api-table-wrap">
+        <div
+          class="ds-api-table-wrap"
+          role="region"
+          aria-label="FormContext members table"
+          tabindex="0"
+        >
           <table class="ds-api-table">
             <thead>
               <tr>
@@ -393,34 +394,49 @@
                 <td>Awaits every async validator. Use on submit after <code>validateAll()</code>.</td>
               </tr>
               <tr>
+                <td><code>hasErrors()</code></td>
+                <td><code>() =&gt; boolean</code></td>
+                <td><code>true</code> when any registered field currently has errors. Does not run validators.</td>
+              </tr>
+              <tr>
                 <td><code>clearErrors()</code></td>
                 <td><code>() =&gt; void</code></td>
                 <td>Clears every field's errors and the form-level errors list.</td>
               </tr>
               <tr>
+                <td><code>getField(attr)</code></td>
+                <td><code>(string) =&gt; FieldHandle | undefined</code></td>
+                <td>The registered field with that exact attribute, if any.</td>
+              </tr>
+              <tr>
                 <td><code>setFieldErrors(attr, errors)</code></td>
-                <td><code>(string, FieldError[])</code></td>
-                <td>Attach error messages to a specific attribute (incl. dotted paths like <code>parts.0.sku</code>). Used to translate server 422 envelopes.</td>
+                <td><code>(string, FieldError[]) =&gt; boolean</code></td>
+                <td>Attach error messages to a registered attribute (incl. dotted paths like <code>parts.0.sku</code>). Used to translate server 422 envelopes. Returns <code>false</code> when no field has that attribute; send those to <code>setFormErrors</code>.</td>
               </tr>
               <tr>
                 <td><code>setFormErrors(errors)</code></td>
-                <td><code>(FieldError[])</code></td>
+                <td><code>(FieldError[]) =&gt; void</code></td>
                 <td>Top-level form errors. Render them however you want.</td>
               </tr>
               <tr>
                 <td><code>setFieldValidators(attr, vs)</code></td>
-                <td><code>(string, Validator[])</code></td>
+                <td><code>(string, Validator[]) =&gt; void</code></td>
                 <td>Replace a registered field's validators.</td>
               </tr>
               <tr>
                 <td><code>addFieldValidator(attr, v)</code></td>
-                <td><code>(string, Validator)</code></td>
+                <td><code>(string, Validator) =&gt; void</code></td>
                 <td>Append one validator to a specific field.</td>
               </tr>
               <tr>
                 <td><code>addFieldValidatorsByPattern(p, vs)</code></td>
-                <td><code>(string, Validator[])</code></td>
-                <td>Layer validators onto every field whose attribute matches a dotted wildcard (<code>parts.*.sku</code>). Forward-applying — new rows pick them up on register.</td>
+                <td><code>(string, Validator[]) =&gt; () =&gt; void</code></td>
+                <td>Layer validators onto every field whose attribute matches a dotted wildcard (<code>parts.*.sku</code>). Forward-applying — new rows pick them up on register. Returns a disposer that removes the pattern and its validators; call it before installing a new schema.</td>
+              </tr>
+              <tr>
+                <td><code>register(h)</code> / <code>unregister(h)</code></td>
+                <td><code>(FieldHandle) =&gt; void</code></td>
+                <td><code>useField</code> calls these for you. Call them yourself only for a hand-written <code>FieldHandle</code>.</td>
               </tr>
               <tr>
                 <td><code>formErrors</code></td>
@@ -444,7 +460,12 @@
         <h3 class="ds-api-heading">
           Validator factories (<code>rules</code>)
         </h3>
-        <div class="ds-api-table-wrap">
+        <div
+          class="ds-api-table-wrap"
+          role="region"
+          aria-label="Validator factories table"
+          tabindex="0"
+        >
           <table class="ds-api-table">
             <thead>
               <tr>
@@ -457,32 +478,214 @@
               <tr>
                 <td><code>required</code></td>
                 <td><code>(attr?, override?)</code></td>
-                <td>Fails on <code>null</code> / <code>undefined</code> / empty string.</td>
+                <td>Fails on <code>null</code>, <code>undefined</code>, <code>''</code>, whitespace-only strings and <code>[]</code>. <code>0</code> and <code>false</code> pass, so a must-tick checkbox needs a custom validator.</td>
+              </tr>
+              <tr>
+                <td><code>requiredIf</code></td>
+                <td><code>(predicate, attr?, override?)</code></td>
+                <td>Same blank check as <code>required</code>, only while <code>predicate()</code> is truthy (called on every validation). Key <code>requiredIf</code>, message from the <code>required</code> string.</td>
               </tr>
               <tr>
                 <td><code>minLen</code> / <code>maxLen</code></td>
                 <td><code>(n, attr?, override?)</code></td>
-                <td>Length checks for strings.</td>
+                <td>String length at least / at most <code>n</code>. Non-string values pass.</td>
+              </tr>
+              <tr>
+                <td><code>lengthBetween</code></td>
+                <td><code>(min, max, attr?, override?)</code></td>
+                <td>String length within <code>min</code>..<code>max</code>, inclusive. Non-string values pass.</td>
               </tr>
               <tr>
                 <td><code>minNum</code> / <code>maxNum</code></td>
                 <td><code>(n, attr?, override?)</code></td>
-                <td>Numeric bounds.</td>
+                <td>Number or numeric string at least / at most <code>n</code>. Non-numeric values pass; pair with <code>numeric</code>.</td>
+              </tr>
+              <tr>
+                <td><code>between</code></td>
+                <td><code>(min, max, attr?, override?)</code></td>
+                <td>Number or numeric string within <code>min</code>..<code>max</code>, inclusive. Non-numeric values pass.</td>
+              </tr>
+              <tr>
+                <td><code>integer</code></td>
+                <td><code>(attr?, override?)</code></td>
+                <td>Number or numeric string must be a whole number. Non-numeric values pass.</td>
+              </tr>
+              <tr>
+                <td><code>numeric</code></td>
+                <td><code>(attr?, override?)</code></td>
+                <td>Finite number or decimal number string. Hex/binary/octal literals (<code>0x1F</code>), whitespace-only strings and other types fail.</td>
               </tr>
               <tr>
                 <td><code>pattern</code></td>
                 <td><code>(re, attr?, override?)</code></td>
-                <td>RegExp test.</td>
+                <td>String must match <code>re</code>; <code>/g</code> and <code>/y</code> flags are safe. Non-string values pass.</td>
               </tr>
               <tr>
                 <td><code>email</code></td>
                 <td><code>(attr?, override?)</code></td>
-                <td>Loose RFC-style email check.</td>
+                <td>Loose <code>local@domain.tld</code> check, no whitespace. Non-string values pass.</td>
+              </tr>
+              <tr>
+                <td><code>url</code></td>
+                <td><code>(attr?, override?)</code></td>
+                <td>Absolute <code>http:</code> / <code>https:</code> URL. Other schemes fail. Non-string values pass.</td>
+              </tr>
+              <tr>
+                <td><code>uuid</code></td>
+                <td><code>(attr?, override?)</code></td>
+                <td>Canonical 8-4-4-4-12 hex UUID, versions 1–8 plus the nil and max UUIDs, any case. Non-string values pass.</td>
+              </tr>
+              <tr>
+                <td><code>oneOf</code></td>
+                <td><code>(allowed, attr?, override?)</code></td>
+                <td>Value must be strictly equal (<code>includes</code>) to one of <code>allowed</code>.</td>
+              </tr>
+              <tr>
+                <td><code>sameAs</code></td>
+                <td><code>(other, attr?, override?)</code></td>
+                <td>Strictly equal to <code>other</code>: a plain value or a ref-like <code>{ value }</code> read on every validation.</td>
               </tr>
               <tr>
                 <td><code>uniqueIn</code></td>
                 <td><code>(siblings, currentIndex, key, override?)</code></td>
-                <td>Cross-row uniqueness check inside an array field.</td>
+                <td>No other row in <code>siblings</code> (array or ref-like <code>{ value }</code>, read on every validation) has the same <code>[key]</code>. Message uses <code>{value}</code>, key <code>unique</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          All {{ ruleCount }} factories return <code>FieldError | undefined</code> with <code>key</code>
+          set to the rule name. Every rule except <code>required</code> and <code>requiredIf</code>
+          skips empty values (<code>null</code>, <code>undefined</code>, <code>''</code>, <code>[]</code>),
+          so pair them with <code>required</code>. Without an <code>attr</code>, messages use the
+          <code>fieldFallback</code> string ("This field").
+        </p>
+
+        <h3 class="ds-api-heading">
+          Strings
+        </h3>
+        <div
+          class="ds-api-table-wrap"
+          role="region"
+          aria-label="Strings functions table"
+          tabindex="0"
+        >
+          <table class="ds-api-table">
+            <thead>
+              <tr>
+                <th>Function</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>setStrings(partial)</code></td>
+                <td><code>(Partial&lt;Strings&gt;) =&gt; void</code></td>
+                <td>Overrides message templates. Keys are type-checked against <code>Strings</code>.</td>
+              </tr>
+              <tr>
+                <td><code>getStrings()</code></td>
+                <td><code>() =&gt; Readonly&lt;Strings&gt;</code></td>
+                <td>The current templates.</td>
+              </tr>
+              <tr>
+                <td><code>resetStrings()</code></td>
+                <td><code>() =&gt; void</code></td>
+                <td>Back to the English defaults.</td>
+              </tr>
+              <tr>
+                <td><code>interpolate(template, params)</code></td>
+                <td><code>(string, Record&lt;string, unknown&gt;?) =&gt; string</code></td>
+                <td>Replaces <code>{name}</code> placeholders; missing params become empty. Useful in custom validators.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ds-callout ds-callout--note">
+          <span class="ds-callout__icon">i</span>
+          <div class="ds-callout__body">
+            <div class="ds-callout__title">
+              Strings are global
+            </div>
+            <p style="margin:0">
+              <code>setStrings</code> changes one module-level table shared by every app instance
+              and every SSR request in the process. Call it once at boot.
+              <code>fieldFallback</code> ("This field") replaces <code>{attr}</code> when a rule has no label.
+              Deprecated, unused by the library and removed in 1.0: <code>selectPlaceholder</code>,
+              <code>searchPlaceholder</code>, <code>currencySymbol</code>, <code>nestedAddButton</code>,
+              <code>nestedDeleteButton</code>, <code>nestedCloneButton</code>, <code>uniqueServer</code>.
+            </p>
+          </div>
+        </div>
+
+        <h3 class="ds-api-heading">
+          Types
+        </h3>
+        <div
+          class="ds-api-table-wrap"
+          role="region"
+          aria-label="Types table"
+          tabindex="0"
+        >
+          <table class="ds-api-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Entry</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>FormContext</code></td>
+                <td>main</td>
+                <td>Return type of <code>useProvideForm</code> / <code>useForm</code> (members above).</td>
+              </tr>
+              <tr>
+                <td><code>UseFieldOptions</code></td>
+                <td>main</td>
+                <td><code>{ attribute, modelValue, validators? }</code> passed to <code>useField</code>.</td>
+              </tr>
+              <tr>
+                <td><code>UseFieldReturn</code></td>
+                <td>main</td>
+                <td><code>{ errors, isInvalid, firstError, validate, validateAsync, onBlur }</code> returned by <code>useField</code>.</td>
+              </tr>
+              <tr>
+                <td><code>Validator</code></td>
+                <td>main, /headless</td>
+                <td><code>(value) =&gt; FieldError | undefined | Promise&lt;…&gt;</code>. Any sync or async validator.</td>
+              </tr>
+              <tr>
+                <td><code>SyncValidator</code></td>
+                <td>main, /headless</td>
+                <td><code>(value) =&gt; FieldError | undefined</code>. What every <code>rules.*</code> factory returns.</td>
+              </tr>
+              <tr>
+                <td><code>FieldError</code></td>
+                <td>main, /headless</td>
+                <td><code>{ message, key?, … }</code>. Open shape; extend via interface merging.</td>
+              </tr>
+              <tr>
+                <td><code>FieldHandle</code></td>
+                <td>main, /headless</td>
+                <td>What a form registers: <code>attribute</code>, <code>errors</code>, validate and error-setting methods.</td>
+              </tr>
+              <tr>
+                <td><code>Strings</code></td>
+                <td>main, /headless</td>
+                <td>Every message template key accepted by <code>setStrings</code>.</td>
+              </tr>
+              <tr>
+                <td><code>FormFieldBinding</code></td>
+                <td>/ant-design</td>
+                <td>The slot <code>field</code>: <code>value</code>, <code>onBlur</code>, <code>invalid</code>, <code>status</code>, <code>firstError</code>, <code>errors</code>, <code>id</code>, <code>errorId</code>.</td>
+              </tr>
+              <tr>
+                <td><code>FormFieldSlotProps</code></td>
+                <td>/ant-design</td>
+                <td><code>{ field: FormFieldBinding }</code>, the default slot props of <code>FormField</code>.</td>
               </tr>
             </tbody>
           </table>
@@ -491,7 +694,12 @@
         <h3 class="ds-api-heading">
           Subpaths
         </h3>
-        <div class="ds-api-table-wrap">
+        <div
+          class="ds-api-table-wrap"
+          role="region"
+          aria-label="Subpaths table"
+          tabindex="0"
+        >
           <table class="ds-api-table">
             <thead>
               <tr>
@@ -501,16 +709,16 @@
             </thead>
             <tbody>
               <tr>
-                <td><code>@einhasad-vue/vue-form</code></td>
-                <td>Main barrel. Composables, classes, validator factories, types. <strong>Zero UI dependencies.</strong></td>
+                <td><code>{{ libName }}</code></td>
+                <td>Main entry: composables, validator factories (<code>rules</code>), strings, types. <strong>Zero UI dependencies.</strong> <code>vue</code> is a peer dependency.</td>
               </tr>
               <tr>
-                <td><code>@einhasad-vue/vue-form/headless</code></td>
-                <td>Pure TypeScript: <code>Form</code> / <code>Field</code> classes, no Vue. For tests, server, non-Vue contexts.</td>
+                <td><code>{{ libName }}/headless</code></td>
+                <td>Pure TypeScript: the <code>Form</code> / <code>Field</code> classes (only exported here), <code>rules</code>, strings. No Vue import at runtime. For tests, server, non-Vue contexts.</td>
               </tr>
               <tr>
-                <td><code>@einhasad-vue/vue-form/ant-design</code></td>
-                <td>Ant Design Vue widget pack. Optional peer-deps: <code>ant-design-vue</code>, <code>dayjs</code>.</td>
+                <td><code>{{ libName }}/ant-design</code></td>
+                <td>One component, <code>FormField</code>: an <code>&lt;a-form-item&gt;</code> wrapper whose default slot receives <code>{ field }</code> for any antd control. Optional peer dependencies: <code>ant-design-vue</code>, <code>dayjs</code>.</td>
               </tr>
             </tbody>
           </table>
@@ -542,9 +750,10 @@
       >
         <h2>Validation rules</h2>
         <p>
-          Every built-in validator factory in one form. <code>rules.required</code>,
+          The everyday factories in one form: <code>rules.required</code>,
           <code>minLen</code>/<code>maxLen</code>, <code>minNum</code>/<code>maxNum</code>,
           <code>pattern</code>, <code>email</code>. All return a <code>FieldError | undefined</code>.
+          The <a href="#api">API reference</a> lists all {{ ruleCount }} factories.
         </p>
         <ExampleFrame
           file="ValidationRulesExample.vue"
@@ -592,7 +801,9 @@
         <p>
           One call to <code>setStrings(partial)</code> retargets every built-in error
           message. Type-checked against the canonical <code>Strings</code> shape, so
-          you can't typo a key.
+          you can't typo a key. <code>setStrings</code> and <code>resetStrings</code> change
+          messages globally: the table is module-level, shared by every app instance and
+          every SSR request in the process.
         </p>
         <ExampleFrame
           file="I18nExample.vue"
@@ -711,14 +922,34 @@
       </section>
 
       <section
+        id="standalone-field"
+        class="demo-section"
+      >
+        <h2>Field without a form</h2>
+        <p>
+          <code>useField</code> works without <code>useProvideForm()</code>: it skips
+          registration and validates locally with the same return shape. A widget that
+          should behave either way asks <code>useFormOptional()</code>, which returns
+          <code>undefined</code> instead of throwing.
+        </p>
+        <ExampleFrame
+          file="StandaloneFieldExample.vue"
+          :source="standaloneSource"
+        >
+          <StandaloneFieldExample />
+        </ExampleFrame>
+      </section>
+
+      <section
         id="headless"
         class="demo-section"
       >
         <h2>Headless subpath (no Vue)</h2>
         <p>
-          Import from <code>@einhasad-vue/vue-form/headless</code> for tests, server-side
+          Import from <code>{{ libName }}/headless</code> for tests, server-side
           code, or any non-Vue context. Same <code>Form</code> / <code>Field</code>
-          classes the Vue layer composes — without <code>vue</code> as a peer-dep.
+          classes the Vue layer composes, with no Vue import at runtime
+          (<code>vue</code> stays a peer dependency of the package).
         </p>
         <ExampleFrame
           file="HeadlessExample.vue"
@@ -734,11 +965,17 @@
       >
         <h2>Ant Design Vue adapter</h2>
         <p>
-          Opt-in widget pack that wraps <code>&lt;a-input&gt;</code>,
-          <code>&lt;a-select&gt;</code>, <code>&lt;a-date-picker&gt;</code>, and friends.
-          Each widget calls <code>useField</code> internally. <strong>Not
-            included unless you import from <code>@einhasad-vue/vue-form/ant-design</code></strong>,
-          so the core lib stays free of antd code.
+          One opt-in component, <code>FormField</code>, wraps <code>&lt;a-form-item&gt;</code>
+          and calls <code>useField</code> for you. Put any antd control in its default slot
+          and bind the slot's <code>{ field }</code>: <code>v-model:value="field.value"</code>,
+          <code>:status="field.status"</code>, <code>@blur="field.onBlur"</code>, plus
+          <code>:id="field.id"</code> so the label points at the control. For text inputs also bind
+          <code>:aria-invalid="field.invalid"</code> and <code>:aria-describedby="field.errorId"</code>
+          (the id of the rendered error, <code>undefined</code> while valid). <code>&lt;a-select&gt;</code>
+          and the date/time pickers accept only <code>:id</code>: ant-design-vue drops <code>aria-*</code>
+          attributes on them. <strong>Not
+            included unless you import from <code>{{ libName }}/ant-design</code></strong>,
+          so the main entry stays free of antd code.
         </p>
         <ExampleFrame
           file="AntdAdapterExample.vue"
@@ -780,7 +1017,7 @@
       </section>
 
       <div style="margin-top:56px;padding:20px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:13px;color:var(--ink-3);">
-        <span>Last updated <time>April 28, 2026</time></span>
+        <span>v{{ version }} released <time :datetime="releaseDate">{{ releaseDateLabel }}</time></span>
         <a
           href="https://github.com/einhasad/vue-form"
           style="color:var(--ink-3);"
@@ -815,7 +1052,7 @@
               stroke-linecap="round"
             />
           </svg>
-          <span class="ds-header__wordmark"><span class="ds-header__wordmark-scope">@einhasad/</span>vue-form</span>
+          <span class="ds-header__wordmark"><span class="ds-header__wordmark-scope">{{ libScope }}</span>{{ libShortName }}</span>
         </span>
         <p>A headless Vue 3 form library that handles the boring parts. MIT licensed.</p>
       </div>
@@ -856,7 +1093,7 @@
       </div>
     </div>
     <div class="ds-footer__legal">
-      <span>© 2026 einhasad · MIT</span>
+      <span>© {{ releaseYear }} einhasad · MIT</span>
       <span>Built with vue-form itself.</span>
     </div>
   </footer>
@@ -865,6 +1102,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
+import { rules } from '@einhasad-vue/vue-form'
 import ExampleFrame from './components/ExampleFrame.vue'
 
 import BasicExample from './examples/BasicExample.vue'
@@ -878,6 +1116,7 @@ import ServerSchemaExample from './examples/ServerSchemaExample.vue'
 import CustomWidgetExample from './examples/CustomWidgetExample.vue'
 import HeadlessExample from './examples/HeadlessExample.vue'
 import AntdAdapterExample from './examples/AntdAdapterExample.vue'
+import StandaloneFieldExample from './examples/StandaloneFieldExample.vue'
 
 import AddVehicleAntd from './views/AddVehicleAntd.vue'
 import AddVehicleMsw from './views/AddVehicleMsw.vue'
@@ -893,9 +1132,23 @@ import schemaSource from './examples/ServerSchemaExample.vue?raw'
 import customWidgetSource from './examples/CustomWidgetExample.vue?raw'
 import headlessSource from './examples/HeadlessExample.vue?raw'
 import antdSource from './examples/AntdAdapterExample.vue?raw'
+import standaloneSource from './examples/StandaloneFieldExample.vue?raw'
 
-const version = '0.1.0'
-const installCommand = 'npm install @einhasad-vue/vue-form'
+const libName = __LIB_NAME__
+const version = __LIB_VERSION__
+const releaseDate = __LIB_RELEASE_DATE__
+const releaseYear = releaseDate.slice(0, 4)
+const releaseDateLabel = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+}).format(new Date(`${releaseDate}T00:00:00Z`))
+const libScope = libName.includes('/') ? libName.slice(0, libName.indexOf('/') + 1) : ''
+const libShortName = libName.slice(libScope.length)
+const baseUrl = import.meta.env.BASE_URL
+const installCommand = `npm install ${libName}`
+const ruleCount = Object.keys(rules).length
 
 // Match docs design system. Tokens map to vars in design-system.css.
 const antdTheme = {
@@ -912,7 +1165,7 @@ const antdTheme = {
     colorPrimaryTextActive: '#000000',
     colorLink: '#111111',
     colorLinkHover: '#3A3A3A',
-    colorBorder: '#E8E4DB',
+    colorBorder: '#8C877C',
     colorBorderSecondary: '#D3CEC1',
     colorBgContainer: '#FBFAF7',
     colorBgElevated: '#FFFFFF',
@@ -921,11 +1174,11 @@ const antdTheme = {
     colorTextSecondary: '#3A3A3A',
     colorTextTertiary: '#6E6A63',
     colorTextQuaternary: '#A09A8E',
-    colorError: '#D64545',
+    colorError: '#C03535',
     colorErrorBg: '#FCEAEA',
-    colorErrorBorder: '#D64545',
+    colorErrorBorder: '#C03535',
     colorWarning: '#7A5500',
-    colorSuccess: '#3E8A5B',
+    colorSuccess: '#2F7A4B',
     colorInfo: '#2E6BBF',
     borderRadius: 4,
     borderRadiusLG: 6,
@@ -958,12 +1211,12 @@ const antdTheme = {
       paddingBlock: 6,
       paddingInline: 10,
       activeBorderColor: '#111111',
-      hoverBorderColor: '#D3CEC1',
+      hoverBorderColor: '#6E6A63',
       activeShadow: '0 0 0 3px rgba(255, 200, 51, 0.35)',
     },
     InputNumber: {
       activeBorderColor: '#111111',
-      hoverBorderColor: '#D3CEC1',
+      hoverBorderColor: '#6E6A63',
       activeShadow: '0 0 0 3px rgba(255, 200, 51, 0.35)',
     },
     Select: {
@@ -971,11 +1224,11 @@ const antdTheme = {
       optionSelectedColor: '#111111',
       optionActiveBg: '#FBFAF7',
       activeBorderColor: '#111111',
-      hoverBorderColor: '#D3CEC1',
+      hoverBorderColor: '#6E6A63',
     },
     DatePicker: {
       activeBorderColor: '#111111',
-      hoverBorderColor: '#D3CEC1',
+      hoverBorderColor: '#6E6A63',
     },
     Checkbox: {
       colorPrimary: '#111111',
@@ -1005,50 +1258,68 @@ const antdTheme = {
   },
 }
 
-const nav = {
-  gettingStarted: [
-    { id: 'introduction', label: 'Introduction' },
-    { id: 'api', label: 'API Reference' },
-    { id: 'basic', label: 'Basic Example' },
-  ],
-  validation: [
-    { id: 'rules', label: 'Validation rules' },
-    { id: 'async', label: 'Async validators' },
-    { id: 'i18n', label: 'i18n / strings' },
-  ],
-  orchestration: [
-    { id: 'form-context', label: 'FormContext API' },
-    { id: 'server-errors', label: 'Server errors (422)' },
-    { id: 'array-fields', label: 'Array fields' },
-    { id: 'server-schema', label: 'Server schemas' },
-  ],
-  adapters: [
-    { id: 'custom-widget', label: 'Custom widget' },
-    { id: 'headless', label: 'Headless subpath' },
-    { id: 'antd-adapter', label: 'Ant Design adapter' },
-  ],
-  realworld: [
-    { id: 'vehicle-mock', label: 'Vehicle (mock)' },
-    { id: 'vehicle-msw', label: 'Vehicle (MSW)' },
-  ],
-}
+const navGroups = [
+  {
+    label: 'Getting started',
+    items: [
+      { id: 'introduction', label: 'Introduction' },
+      { id: 'api', label: 'API Reference' },
+      { id: 'basic', label: 'Basic Example' },
+    ],
+  },
+  {
+    label: 'Validation',
+    items: [
+      { id: 'rules', label: 'Validation rules' },
+      { id: 'async', label: 'Async validators' },
+      { id: 'i18n', label: 'i18n / strings' },
+    ],
+  },
+  {
+    label: 'Form orchestration',
+    items: [
+      { id: 'form-context', label: 'FormContext API' },
+      { id: 'server-errors', label: 'Server errors (422)' },
+      { id: 'array-fields', label: 'Array fields' },
+      { id: 'server-schema', label: 'Server schemas' },
+    ],
+  },
+  {
+    label: 'Adapters & patterns',
+    items: [
+      { id: 'custom-widget', label: 'Custom widget' },
+      { id: 'standalone-field', label: 'Field without a form' },
+      { id: 'headless', label: 'Headless subpath' },
+      { id: 'antd-adapter', label: 'Ant Design adapter' },
+    ],
+  },
+  {
+    label: 'Real-world',
+    items: [
+      { id: 'vehicle-mock', label: 'Vehicle (mock)' },
+      { id: 'vehicle-msw', label: 'Vehicle (MSW)' },
+    ],
+  },
+]
 
-const allSections = [
-  ...nav.gettingStarted,
-  ...nav.validation,
-  ...nav.orchestration,
-  ...nav.adapters,
-  ...nav.realworld,
-].map((s) => s.id)
+const allSections = navGroups.flatMap((g) => g.items.map((s) => s.id))
 
 const activeSection = ref(allSections[0] ?? 'introduction')
 
 function scrollTo(id: string) {
   const el = document.getElementById(id)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    activeSection.value = id
-  }
+  if (!el) return
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  history.replaceState(null, '', `#${id}`)
+  activeSection.value = id
+}
+
+const mobileNav = ref<HTMLDetailsElement | null>(null)
+
+function scrollFromMobileNav(id: string) {
+  if (mobileNav.value) mobileNav.value.open = false
+  scrollTo(id)
 }
 
 function updateActiveSection() {
@@ -1099,3 +1370,83 @@ onUnmounted(() => {
   window.removeEventListener('scroll', updateActiveSection)
 })
 </script>
+
+<style scoped>
+.ds-app .ds-skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: var(--radius-xs);
+  transform: translateY(-200%);
+}
+.ds-app .ds-skip-link:focus {
+  transform: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#main,
+.demo-section {
+  scroll-margin-top: calc(var(--header-h) + var(--space-4));
+}
+
+.ds-mobile-nav {
+  display: none;
+  margin: 0 0 var(--space-6);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+}
+.ds-mobile-nav__summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-4);
+  font-weight: 500;
+  color: var(--ink);
+  list-style: none;
+  cursor: pointer;
+}
+.ds-mobile-nav__summary::-webkit-details-marker {
+  display: none;
+}
+.ds-mobile-nav__summary::after {
+  content: '▾';
+  content: '▾' / '';
+  margin-left: auto;
+  color: var(--ink-3);
+}
+.ds-mobile-nav[open] .ds-mobile-nav__summary::after {
+  content: '▴';
+  content: '▴' / '';
+}
+.ds-mobile-nav nav {
+  padding: 0 var(--space-3) var(--space-3);
+  border-top: 1px solid var(--line);
+}
+.ds-mobile-nav__group {
+  margin-top: var(--space-3);
+}
+.ds-mobile-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ds-mobile-nav .ds-sidebar__link {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 960px) {
+  .ds-mobile-nav {
+    display: block;
+  }
+}
+</style>

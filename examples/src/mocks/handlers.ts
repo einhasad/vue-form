@@ -79,8 +79,8 @@ export const handlers = [
     }
     return HttpResponse.json(
       seed
-        .filter((n) => n.toLowerCase().includes(q.toLowerCase()))
-        .map((name, i) => ({ id: i + 1, name: `${name} (${q})` })),
+        .map((name, i) => ({ id: i + 1, name }))
+        .filter((part) => part.name.toLowerCase().includes(q.toLowerCase())),
     )
   }),
 
@@ -98,6 +98,9 @@ export const handlers = [
     // Top-level field errors.
     if (body.name === 'reject') {
       errors.push({ field: 'name', message: 'Server says this name is taken.' })
+    }
+    if (body.name === 'legacy') {
+      errors.push({ field: 'legacyCode', message: 'Legacy code is required for imported vehicles.' })
     }
     if (body.vin && String(body.vin).toUpperCase().startsWith(TAKEN_VIN_PREFIX)) {
       errors.push({ field: 'vin', message: 'VIN is already registered.' })

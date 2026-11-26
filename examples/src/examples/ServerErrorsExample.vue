@@ -59,7 +59,7 @@ async function onSubmit() {
       <TextField
         v-model="data.username"
         attribute="username"
-        label="Username — type `taken` to trigger a 422"
+        label="Username — type “taken” to trigger a 422"
         :validators="[rules.required('Username')]"
       />
       <TextField

@@ -1,6 +1,6 @@
 {
   "name": "@einhasad-vue/vue-form",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Fully headless Vue 3 form library. Composables and validator factories — bring your own UI. Framework-free Form/Field classes at the ./headless subpath; optional Ant Design Vue adapter at ./ant-design.",
   "author": "Dima Popov",
   "license": "MIT",
